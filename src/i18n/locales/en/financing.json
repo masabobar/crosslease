@@ -262,5 +262,24 @@
   "kinds": {
     "single": "Single loan",
     "package": "Package loan"
+  },
+  "detail": {
+    "caseId": "Case ID ·",
+    "leasingCompany": "Leasing company",
+    "productTemplate": "Bank product template",
+    "frameworkAgreement": "Framework agreement",
+    "outstandingBalance": "Outstanding balance",
+    "asOf": "calculated as of {{date}}",
+    "loanNumber": "Loan number",
+    "approvedPayout": "Payout amount, approved loan",
+    "provisional": "Provisional",
+    "final": "Final",
+    "tabs": {
+      "data": "Data",
+      "contracts": "Contracts",
+      "documents": "Documents",
+      "activity": "Activity"
+    },
+    "openAgreement": "Open agreement"
   }
 }

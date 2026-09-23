@@ -59,10 +59,12 @@ export function FinancingDataPanel({ caseId }: { caseId: string }) {
   const { data, isLoading, isError, error } = useFinancingOverview(caseId)
 
   // Gated on the same flag that decides whether figures may be shown at all — asking for a balance
-  // the caller cannot see would 403 on every render.
+  // the caller cannot see would 403 on every render — AND on the calculation having finished: the
+  // endpoint 404s while figures are pending, and the banner already says they are provisional, so
+  // the request only produced a console error nobody could act on.
   const balance = useFinancingRemainingBalance(
     caseId,
-    data?.bank_figures_visible === true
+    data?.bank_figures_visible === true && data?.figures_pending !== true
   )
 
   if (isLoading) {

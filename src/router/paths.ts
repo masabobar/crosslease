@@ -81,12 +81,20 @@ export const PATHS = {
   // The financings list. There is deliberately no detail route: every financing endpoint other
   // than this list is case-scoped, so a row opens its case workspace.
   FINANCING_LIST: "/financings",
+  // Keyed on the CASE id, not a financing id: there is no `GET /financings/{id}` and every
+  // endpoint this screen reads is `/cases/{case_id}/financing/…`, so the case is the financing's
+  // address rather than a detail about it.
+  FINANCING_DETAIL: "/financings/:caseId",
   CASE_DETAIL: "/cases/:caseId",
   // The New refinancing request wizard (US 1.1–1.5, 1.17). Nested under the case because every
   // step writes to a case-scoped endpoint, so the case exists before the wizard opens — see
   // StartCaseWizardPage. Not "/cases/new": there is no case-less draft to edit.
   CASE_WIZARD: "/cases/:caseId/new-request",
 } as const
+
+export function financingDetail(caseId: string): string {
+  return PATHS.FINANCING_DETAIL.replace(":caseId", caseId)
+}
 
 export function adminUserDetail(id: string): string {
   return PATHS.USER_DETAIL.replace(":id", id)

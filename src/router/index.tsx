@@ -182,6 +182,9 @@ const CaseListPage = lazy(
 const FinancingListPage = lazy(
   () => import("@/features/financing/components/FinancingListPage")
 )
+const FinancingDetailPage = lazy(
+  () => import("@/features/financing/components/FinancingDetailPage")
+)
 const CaseDetailPage = lazy(
   () => import("@/features/cases/components/CaseDetailPage")
 )
@@ -603,6 +606,16 @@ export const router = createBrowserRouter([
           <Suspense fallback={null}>
             <RoleGuard allowed={CASE_READ_ALLOWED_ROLES}>
               <FinancingListPage />
+            </RoleGuard>
+          </Suspense>
+        ),
+      },
+      {
+        path: PATHS.FINANCING_DETAIL,
+        element: (
+          <Suspense fallback={null}>
+            <RoleGuard allowed={CASE_READ_ALLOWED_ROLES}>
+              <FinancingDetailPage />
             </RoleGuard>
           </Suspense>
         ),

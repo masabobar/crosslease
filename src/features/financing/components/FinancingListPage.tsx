@@ -22,7 +22,7 @@ import { buildPageNumbers } from "@/lib/pagination"
 import { formatDate } from "@/lib/formatters"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { useDebouncedValue } from "@/hooks/useDebouncedValue"
-import { caseDetail } from "@/router/paths"
+import { financingDetail } from "@/router/paths"
 import { useFinancings } from "@/features/financing/hooks/useFinancings"
 import { financingsExportUrl } from "@/features/financing/api/financingListApi"
 import {
@@ -200,11 +200,11 @@ export default function FinancingListPage() {
                   tabIndex={0}
                   className="cursor-pointer"
                   data-testid={`financing-row-${row.id}`}
-                  onClick={() => navigate(caseDetail(row.case_id))}
+                  onClick={() => navigate(financingDetail(row.case_id))}
                   onKeyDown={event => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault()
-                      navigate(caseDetail(row.case_id))
+                      navigate(financingDetail(row.case_id))
                     }
                   }}
                 >

@@ -262,5 +262,24 @@
   "kinds": {
     "single": "Einzeldarlehen",
     "package": "Paketdarlehen"
+  },
+  "detail": {
+    "caseId": "Vorgangs-ID ·",
+    "leasingCompany": "Leasinggesellschaft",
+    "productTemplate": "Bankproduktvorlage",
+    "frameworkAgreement": "Rahmenvertrag",
+    "outstandingBalance": "Offener Saldo",
+    "asOf": "berechnet zum {{date}}",
+    "loanNumber": "Darlehensnummer",
+    "approvedPayout": "Auszahlungsbetrag, genehmigtes Darlehen",
+    "provisional": "Vorläufig",
+    "final": "Endgültig",
+    "tabs": {
+      "data": "Daten",
+      "contracts": "Verträge",
+      "documents": "Dokumente",
+      "activity": "Aktivität"
+    },
+    "openAgreement": "Rahmenvertrag öffnen"
   }
 }

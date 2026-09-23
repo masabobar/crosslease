@@ -489,6 +489,24 @@
         }
       }
     },
+    "/api/v1/dashboard": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Read Dashboard",
+        "description": "What is moving through refinancing today (US-1.71).\n\nGuarded by the same role set as the case list, and every figure inherits that scoping: the\ndashboard composes the case and financing list services rather than querying around them, so a\nuser cannot see a count over cases their list would not show them.",
+        "operationId": "read_dashboard_api_v1_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DashboardResponse" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases/{case_id}/financing/follow-ups": {
       "post": {
         "tags": ["Cases"],
@@ -1603,7 +1621,7 @@
             "description": "Successful Response",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/CaseResponse" }
+                "schema": { "$ref": "#/components/schemas/CaseDetailResponse" }
               }
             }
           },
@@ -1907,6 +1925,147 @@
                 "schema": {
                   "$ref": "#/components/schemas/app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse"
                 }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/redemptions": {
+      "get": {
+        "tags": ["Cases"],
+        "summary": "List Case Redemptions",
+        "description": "US 1.37 — what has been paid off out of this case's financing, newest first.\n\nRead from the PARENT case (the refinancing request): a redemption is a follow-up case of the\nfinancing, and the question this answers is what the deal has had redeemed out of it. A case\nwith no financing answers an empty page, not a 404 — nothing has been redeemed out of it yet.\n\nEvery figure is nullable: a redemption case exists from the moment it is started, before anyone\nhas worked out what it is worth.",
+        "operationId": "list_case_redemptions_api_v1_cases__case_id__redemptions_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "description": "Page number (1-based)",
+              "default": 1,
+              "title": "Page"
+            },
+            "description": "Page number (1-based)"
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "description": "Results per page (max 200)",
+              "default": 25,
+              "title": "Per Page"
+            },
+            "description": "Results per page (max 200)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RedemptionListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/redemption": {
+      "put": {
+        "tags": ["Cases"],
+        "summary": "Capture Case Redemption",
+        "description": "Capture what is owed to redeem the set, and from when. Front office.\n\nThe case must be a redemption follow-up (``single_redemption`` / ``package_redemption``) — 422\notherwise, because the amount would otherwise sit on a record that redeems nothing. Re-capturing\ncorrects the figure while it is still pending; once settled the figures are frozen (409).",
+        "operationId": "capture_case_redemption_api_v1_cases__case_id__redemption_put",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RedemptionCaptureRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RedemptionResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/redemption/settle": {
+      "post": {
+        "tags": ["Cases"],
+        "summary": "Settle Case Redemption",
+        "description": "Record that the money arrived. Back office, and terminal.\n\nRefused when no amount has been captured (409): settling records that money arrived against a\nstated figure, and a settled redemption of nothing reads as complete while meaning nothing.\nRefused again once settled (409) — the row is locked before its status is read, so two approvers\nsettling at the same moment settle once.",
+        "operationId": "settle_case_redemption_api_v1_cases__case_id__redemption_settle_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/RedemptionResponse" }
               }
             }
           },
@@ -2501,6 +2660,42 @@
         }
       }
     },
+    "/api/v1/cases/{case_id}/financing/calculate": {
+      "post": {
+        "tags": ["Financing"],
+        "summary": "Calculate Case Financing",
+        "description": "Run the provisional refinancing calculation over the current terms (PRD1042-11, US 1.41).\n\nA read-only compute — nothing is persisted (saving the terms stays the PUT endpoints). The\nmeasurement basis of the bound product template decides which computation runs: PRESENT_VALUE\ndiscounts the contracts' lease streams, AGREED_AMOUNT returns the stored agreed amount, and\nRATIO_ON_ACQUISITION_COST is refused (no delivered sample, OQ-22) → 422. A missing term (rate,\nquota, value date, agreed amount) or an uncalibrated frequency also refuses with a typed 422,\nnever a computed zero (§6.5.8).",
+        "operationId": "calculate_case_financing_api_v1_cases__case_id__financing_calculate_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalculationResultResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases/{case_id}/financing/overview": {
       "get": {
         "tags": ["Financing"],
@@ -2750,6 +2945,50 @@
           "content": {
             "application/json": {
               "schema": { "$ref": "#/components/schemas/SetValueDateRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FinancingRead" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/financing/agreed-loan-amount": {
+      "put": {
+        "tags": ["Financing"],
+        "summary": "Set Case Financing Agreed Loan Amount",
+        "description": "Set the AGREED_AMOUNT basis's disbursement input on the case's financing (§6.5.1).\n\n\"Blank business\": the amount is an input, not derived from a lease stream. Read only when the bound\nproduct template's measurement basis is AGREED_AMOUNT. Editable up to the bank settlement, same\nwindow as the value date.",
+        "operationId": "set_case_financing_agreed_loan_amount_api_v1_cases__case_id__financing_agreed_loan_amount_put",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetAgreedLoanAmountRequest"
+              }
             }
           }
         },
@@ -3159,7 +3398,7 @@
       "get": {
         "tags": ["Financing"],
         "summary": "Read Payment Plan",
-        "description": "A contract's Financing Component + its ordered payment plan (PRD1042-1927, US 1.11).",
+        "description": "A contract's ordered payment plan, and its Financing Component when the case has one\n(PRD1042-1927, US 1.11; readable during intake since PRD1042-2262, when `component` is null).",
         "operationId": "read_payment_plan_api_v1_cases__case_id__contracts__contract_id__payment_plan_get",
         "parameters": [
           {
@@ -3201,7 +3440,7 @@
       "put": {
         "tags": ["Financing"],
         "summary": "Set Manual Payment Plan",
-        "description": "Replace a contract's plan with hand-entered rows (PRD1042-1927, US 1.11).\n\nThe catch-all for irregular structures; a MANUAL plan is never regenerated from terms (R2). Refused\n(409) once the financing is frozen. FO + BO; tenant-scoped → 404.",
+        "description": "Replace a contract's plan with hand-entered rows (PRD1042-1927, US 1.11).\n\nThe catch-all for irregular structures; a MANUAL plan is never regenerated from terms (R2).\n\n**Writable during case intake** (PRD1042-2262) — this is what the wizard's Payment plan tab calls,\nbefore the case is committed and a financing exists. Refused (409) once the financing is frozen,\nor, before there is one, once the request has left DRAFT. FO + BO; tenant-scoped → 404.",
         "operationId": "set_manual_payment_plan_api_v1_cases__case_id__contracts__contract_id__payment_plan_put",
         "parameters": [
           {
@@ -5020,6 +5259,83 @@
           "200": {
             "description": "Successful Response",
             "content": { "application/json": { "schema": {} } }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/contracts": {
+      "get": {
+        "tags": ["Contracts"],
+        "summary": "List Contracts Across Cases",
+        "description": "The contracts the caller can see, across their cases (US-1.73).\n\nGuarded by the same role set as every other contract read. `total` counts the matching set, not\nthe page: this surface is meant to answer \"how many contracts look like this\", and a total that\nreported the page would answer a different question.",
+        "operationId": "list_contracts_across_cases_api_v1_contracts_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "type": "string", "minLength": 2, "maxLength": 200 },
+                { "type": "null" }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "deferred_state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                { "$ref": "#/components/schemas/ContractDeferredState" },
+                { "type": "null" }
+              ],
+              "title": "Deferred State"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractWorkSurfaceResponse"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -8026,6 +8342,164 @@
         }
       }
     },
+    "/api/v1/partners/{id}/relationships": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "List Partner Relationships",
+        "description": "How this party stands to other parties, plus its beneficial owners (read-only here).",
+        "operationId": "list_partner_relationships_api_v1_partners__id__relationships_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerRelationshipsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Add Partner Relationship",
+        "description": "Record one edge. PARTNER_EDIT — partner master data, the right its creators already hold.",
+        "operationId": "add_partner_relationship_api_v1_partners__id__relationships_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PartnerRelationshipCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerRelationshipItem"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/documents": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "List Partner Documents",
+        "description": "The documents kept on this party. Each row names the media object \"Open\" streams.",
+        "operationId": "list_partner_documents_api_v1_partners__id__documents_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerDocumentsResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Upload Partner Document",
+        "description": "Store a document against this party.\n\nMultipart, mirroring the case-document upload. The declared MIME type is the CLIENT's claim and\nis treated as such: the service checks it against the whitelist, caps the size, and confirms the\nbytes really are that format before anything is stored.",
+        "operationId": "upload_partner_document_api_v1_partners__id__documents_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_partner_document_api_v1_partners__id__documents_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/PartnerDocumentItem" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/partners/{id}/ubo": {
       "post": {
         "tags": ["Partners"],
@@ -8312,6 +8786,181 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BankAccountCloseResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/addresses": {
+      "get": {
+        "tags": ["Partners"],
+        "summary": "List Partner Addresses",
+        "operationId": "list_partner_addresses_api_v1_partners__id__addresses_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerAddressListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Add Partner Address",
+        "operationId": "add_partner_address_api_v1_partners__id__addresses_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerAddressInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerAddressResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/addresses/{address_id}": {
+      "patch": {
+        "tags": ["Partners"],
+        "summary": "Update Partner Address",
+        "operationId": "update_partner_address_api_v1_partners__id__addresses__address_id__patch",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "address_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Address Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PartnerAddressInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerAddressResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/partners/{id}/addresses/{address_id}/retire": {
+      "post": {
+        "tags": ["Partners"],
+        "summary": "Retire Partner Address",
+        "description": "Retire, not delete — the row stays readable (mirrors the bank-account close route).",
+        "operationId": "retire_partner_address_api_v1_partners__id__addresses__address_id__retire_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Id" }
+          },
+          {
+            "name": "address_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Address Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PartnerAddressResponse"
                 }
               }
             }
@@ -9074,6 +9723,18 @@
               "title": "Lc Eligible"
             },
             "description": "Only confirmed partners that are the LC party of at least one non-terminated framework agreement — valid lc_partner_id targets for a leasing_company_user invite"
+          },
+          {
+            "name": "referenceable",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "description": "Only partners another record may reference — excludes draft, pending-confirmation, rejected, merged, archived and pending-archive. These are exactly the statuses a capture endpoint refuses with 422 PARTNER_NOT_REFERENCEABLE, so a picker that sets this can never offer a partner the subsequent write would reject.",
+              "default": false,
+              "title": "Referenceable"
+            },
+            "description": "Only partners another record may reference — excludes draft, pending-confirmation, rejected, merged, archived and pending-archive. These are exactly the statuses a capture endpoint refuses with 422 PARTNER_NOT_REFERENCEABLE, so a picker that sets this can never offer a partner the subsequent write would reject."
           },
           {
             "name": "limit",
@@ -12485,100 +13146,6 @@
         }
       }
     },
-    "/api/v1/cases/{business_object_id}/phase-gates": {
-      "get": {
-        "tags": ["Workflow Task Catalog — Runtime"],
-        "summary": "Get Phase Gates",
-        "operationId": "get_phase_gates_api_v1_cases__business_object_id__phase_gates_get",
-        "parameters": [
-          {
-            "name": "business_object_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Business Object Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": { "$ref": "#/components/schemas/PhaseGateResponse" },
-                  "title": "Response Get Phase Gates Api V1 Cases  Business Object Id  Phase Gates Get"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/cases/{business_object_id}/phase-gates/{phase}": {
-      "patch": {
-        "tags": ["Workflow Task Catalog — Runtime"],
-        "summary": "Set Phase Gate",
-        "operationId": "set_phase_gate_api_v1_cases__business_object_id__phase_gates__phase__patch",
-        "parameters": [
-          {
-            "name": "business_object_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid",
-              "title": "Business Object Id"
-            }
-          },
-          {
-            "name": "phase",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": { "$ref": "#/components/schemas/SetPhaseGateRequest" }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/PhaseGateResponse" }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/vfe-rates": {
       "get": {
         "tags": ["VFE Rates"],
@@ -13675,6 +14242,269 @@
         }
       }
     },
+    "/api/v1/cases/{case_id}/documents/{requirement_definition_id}/confirm-set": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Case Documents"],
+        "summary": "Confirm Case Document Set",
+        "description": "The front office confirms this requirement's file set is complete (PRD1042-2263).\n\nA bank-side confirmation on a SEPARATE axis from the per-file review state — a requirement can be\nPRESENT (files arrived, not yet checked) and set-confirmed at once. Idempotent; a later upload or\nwithdrawal resets it. The leasing company never confirms a set (refused as not-found). Thin\nwrapper over the fulfilment service.",
+        "operationId": "confirm_case_document_set_api_v1_cases__case_id__documents__requirement_definition_id__confirm_set_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          },
+          {
+            "name": "requirement_definition_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Requirement Definition Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/FulfilmentResponse" }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/documents/{requirement_definition_id}/files/{document_id}": {
+      "delete": {
+        "tags": ["Document Requirement Catalog — Case Documents"],
+        "summary": "Remove Case Document File",
+        "description": "Withdraw ONE filed document from a requirement (US 1.44 follow-up).\n\nPer FILE, not per requirement: a requirement can hold several documents, so a single remove on\nthe row would have no defensible target. The same pair of permissions as the upload — whoever may\nfile may take their filing back — with the same tenant/LC scoping, so a case the caller cannot\nsee answers not-found.\n\nRefused (422) once the bank has CHECKED the document: that is evidence the bank accepted, and\nwithdrawing it would change the case's evidence after a completed review. Allowed while `present`\nor `invalid`.\n\nA soft remove — the row and its bytes stay for audit, and every live projection filters them out.\nReturns the WHOLE refreshed list so the caller re-renders from the server's truth rather than\nguessing what the withdrawal did to the row's state (the last file going takes it back to\n`missing`).",
+        "operationId": "remove_case_document_file_api_v1_cases__case_id__documents__requirement_definition_id__files__document_id__delete",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          },
+          {
+            "name": "requirement_definition_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Requirement Definition Id"
+            }
+          },
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CaseDocumentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/documents/misc": {
+      "get": {
+        "tags": ["Document Requirement Catalog — Case Documents"],
+        "summary": "List Case Misc Documents",
+        "description": "The case's miscellaneous (non-requirement) documents (PRD1042-2263).",
+        "operationId": "list_case_misc_documents_api_v1_cases__case_id__documents_misc_get",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MiscDocumentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Document Requirement Catalog — Case Documents"],
+        "summary": "Add Case Misc Document",
+        "description": "Upload a free-form document to a case, outside the resolved requirement set (PRD1042-2263).\n\nStored through the same secure media path (MIME whitelist + magic-byte confirmation + size cap) as\na requirement upload. The document type and label are optional and set here or edited later.",
+        "operationId": "add_case_misc_document_api_v1_cases__case_id__documents_misc_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_add_case_misc_document_api_v1_cases__case_id__documents_misc_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MiscDocumentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/documents/misc/{misc_id}": {
+      "patch": {
+        "tags": ["Document Requirement Catalog — Case Documents"],
+        "summary": "Update Case Misc Document",
+        "description": "Set or clear a miscellaneous document's type + label (PRD1042-2263).",
+        "operationId": "update_case_misc_document_api_v1_cases__case_id__documents_misc__misc_id__patch",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          },
+          {
+            "name": "misc_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Misc Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMiscDocumentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MiscDocumentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Document Requirement Catalog — Case Documents"],
+        "summary": "Remove Case Misc Document",
+        "description": "Remove a miscellaneous document (soft remove — bytes + row kept for audit) (PRD1042-2263).",
+        "operationId": "remove_case_misc_document_api_v1_cases__case_id__documents_misc__misc_id__delete",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          },
+          {
+            "name": "misc_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Misc Id" }
+          }
+        ],
+        "responses": {
+          "204": { "description": "Successful Response" },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/cases/{case_id}/generated-documents": {
       "get": {
         "tags": ["Document Requirement Catalog — Generated Documents"],
@@ -13833,6 +14663,52 @@
             "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedDocumentListResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/HTTPValidationError" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/cases/{case_id}/generated-documents/calculation-data-sheet": {
+      "post": {
+        "tags": ["Document Requirement Catalog — Generated Documents"],
+        "summary": "Upload Calculation Data Sheet",
+        "description": "File the calculation data sheet — the one generated type produced OUTSIDE the platform.\n\nNothing here computes it, so there is no production point; it is uploaded and then sits on the\ngenerated tab beside the produced six (US 1.24). An UPLOAD, so it goes through the checked media\npath — MIME whitelist, magic-byte confirmation and the size cap — unlike the rendered documents,\nwhose bytes the platform itself produced. Same preparing role as producing one (Front Office);\nre-uploading replaces the current sheet (R5). Returns the refreshed list.",
+        "operationId": "upload_calculation_data_sheet_api_v1_cases__case_id__generated_documents_calculation_data_sheet_post",
+        "parameters": [
+          {
+            "name": "case_id",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid", "title": "Case Id" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_calculation_data_sheet_api_v1_cases__case_id__generated_documents_calculation_data_sheet_post"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -15703,6 +16579,26 @@
         "title": "BindProductTemplateRequest",
         "description": "Step 2 of the wizard, and a step of its own rather than half of a general-information page.\n\nThe template list depends on the agreement, which depends on the company, so the order carries a\ndependency — merging the two steps would hide it."
       },
+      "Body_add_case_misc_document_api_v1_cases__case_id__documents_misc_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "document_type_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Type Code"
+          },
+          "document_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Label"
+          }
+        },
+        "type": "object",
+        "required": ["file"],
+        "title": "Body_add_case_misc_document_api_v1_cases__case_id__documents_misc_post"
+      },
       "Body_attach_document_api_v1_framework_agreements__id__documents_post": {
         "properties": {
           "file": {
@@ -15733,6 +16629,18 @@
         "required": ["file"],
         "title": "Body_attach_document_api_v1_framework_agreements__id__documents_post"
       },
+      "Body_upload_calculation_data_sheet_api_v1_cases__case_id__generated_documents_calculation_data_sheet_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": ["file"],
+        "title": "Body_upload_calculation_data_sheet_api_v1_cases__case_id__generated_documents_calculation_data_sheet_post"
+      },
       "Body_upload_case_document_api_v1_cases__case_id__documents_post": {
         "properties": {
           "requirement_definition_id": {
@@ -15761,6 +16669,33 @@
         "type": "object",
         "required": ["file"],
         "title": "Body_upload_contract_import_api_v1_cases__case_id__contracts_import_post"
+      },
+      "Body_upload_partner_document_api_v1_partners__id__documents_post": {
+        "properties": {
+          "document_type_code": {
+            "type": "string",
+            "title": "Document Type Code"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "document_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Document Date"
+          },
+          "label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": ["document_type_code", "file"],
+        "title": "Body_upload_partner_document_api_v1_partners__id__documents_post"
       },
       "Body_upload_picture_api_v1_users_me_picture_post": {
         "properties": {
@@ -15801,6 +16736,55 @@
         "required": ["removed"],
         "title": "BulkRemoveResponse",
         "description": "How many contracts a bulk-remove call actually removed (already-removed rows are skipped)."
+      },
+      "CalculationResultResponse": {
+        "properties": {
+          "basis": { "$ref": "#/components/schemas/MeasurementBasis" },
+          "model": { "$ref": "#/components/schemas/RefinancingForm" },
+          "disbursement": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Disbursement"
+          },
+          "aggregate_instalment": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Aggregate Instalment"
+          },
+          "balloon": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Balloon"
+          },
+          "final_maturity": {
+            "type": "string",
+            "format": "date",
+            "title": "Final Maturity"
+          },
+          "schedule": {
+            "items": { "$ref": "#/components/schemas/ScheduleLineResponse" },
+            "type": "array",
+            "title": "Schedule"
+          },
+          "excluded_payments": {
+            "items": { "$ref": "#/components/schemas/ExcludedPaymentResponse" },
+            "type": "array",
+            "title": "Excluded Payments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "basis",
+          "model",
+          "disbursement",
+          "aggregate_instalment",
+          "balloon",
+          "final_maturity",
+          "schedule",
+          "excluded_payments"
+        ],
+        "title": "CalculationResultResponse",
+        "description": "The provisional calculation result (PRD1042-11, US 1.41, §6.5.8).\n\nA read-only compute over the current terms — never persisted. ``basis`` records which measurement\nbasis produced it (only ``present_value`` discounts). All amounts are to the cent."
       },
       "CandidateSummary": {
         "properties": {
@@ -16108,6 +17092,108 @@
         "title": "CaseDataResponse",
         "description": "The case Data area — the captured data grouped by field block (PRD1042-1938, US 1.22).\n\nOnly the blocks whose capture exists today are populated (leasing company, lessee + contracts,\nfinancing, collateral). The blocks whose capture is unbuilt — objects, credit assessment, guarantor\n/ co-obligor — are named in ``absent_blocks`` rather than shown empty; the ninth block (1938-OQ-01)\nis not built against a guess. Credit exposure is a figure (on the financing block), never a group."
       },
+      "CaseDetailResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "case_reference": { "type": "string", "title": "Case Reference" },
+          "case_type": { "$ref": "#/components/schemas/CaseType" },
+          "case_status": { "$ref": "#/components/schemas/CaseStatus" },
+          "request_status": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RequestStatus" },
+              { "type": "null" }
+            ]
+          },
+          "financing_status": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/FinancingStatus" },
+              { "type": "null" }
+            ]
+          },
+          "display_status": {
+            "$ref": "#/components/schemas/CaseDisplayStatus"
+          },
+          "primary_entity": {
+            "$ref": "#/components/schemas/CasePrimaryEntity"
+          },
+          "origin": { "$ref": "#/components/schemas/CaseOrigin" },
+          "owner_user_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Owner User Id"
+          },
+          "lc_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lc Partner Id"
+          },
+          "routing_exception": {
+            "type": "boolean",
+            "title": "Routing Exception"
+          },
+          "origin_financing_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Origin Financing Id"
+          },
+          "decision_round": {
+            "type": "integer",
+            "title": "Decision Round",
+            "default": 0
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "financing_reference": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Financing Reference"
+          },
+          "rate_due_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Rate Due Date"
+          },
+          "waiting_on_roles": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Waiting On Roles"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_reference",
+          "case_type",
+          "case_status",
+          "display_status",
+          "primary_entity",
+          "origin",
+          "owner_user_id",
+          "lc_partner_id",
+          "routing_exception",
+          "created_by",
+          "created_at"
+        ],
+        "title": "CaseDetailResponse",
+        "description": "The single-case read (``GET /cases/{case_id}``).\n\nAdds the three fields the case header shows and the base response does not carry. They live\nhere rather than on ``CaseResponse`` because that model is the return of ~10 write endpoints\n(create, assign, decide, cancel…) which compute none of this — widening it would make them all\nanswer null for fields they never looked at, and a null that means \"not computed\" is\nindistinguishable from a null that means \"no carrier\".\n\n``rate_due_date`` and ``waiting_on_roles`` are also declared on :class:`CaseListItem`. That is\nthe SECOND occurrence, deliberately left duplicated rather than extracted into a mixin\n(`code-quality.md` — note the pattern at two, extract at three); the docs below are kept in\nstep with it, because the waiting-on null rule is the kind of thing that goes wrong when the\ntwo drift."
+      },
       "CaseDisplayStatus": {
         "type": "string",
         "enum": [
@@ -16123,9 +17209,11 @@
           "rejected",
           "calculating",
           "ready_for_setup",
+          "set_up",
           "disbursed",
           "active",
-          "ended"
+          "ended",
+          "run_out"
         ],
         "title": "CaseDisplayStatus",
         "description": "The single status shown in the list, derived and never stored.\n\nIt is not a fourth set: every value here comes from one of the three stored sets. Filtering and\nsorting run on the stored sets and never on this value — a query built on a derivation depends\non the derivation instead of on stored data."
@@ -16200,6 +17288,7 @@
           },
           "classification": { "type": "string", "title": "Classification" },
           "status": { "type": "string", "title": "Status" },
+          "set_confirmed": { "type": "boolean", "title": "Set Confirmed" },
           "files": {
             "items": { "$ref": "#/components/schemas/CaseDocumentFile" },
             "type": "array",
@@ -16215,6 +17304,7 @@
           "role_scope",
           "classification",
           "status",
+          "set_confirmed",
           "files"
         ],
         "title": "CaseDocumentRow",
@@ -16245,6 +17335,13 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Personennummer Os Plus"
           },
+          "agreement_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Agreement Id"
+          },
           "agreement_reference": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Agreement Reference"
@@ -16252,6 +17349,10 @@
           "agreement_active": {
             "type": "boolean",
             "title": "Agreement Active"
+          },
+          "bank_side_visible": {
+            "type": "boolean",
+            "title": "Bank Side Visible"
           },
           "vfe_amount_eur": {
             "anyOf": [
@@ -16299,8 +17400,10 @@
           "address",
           "contact_person",
           "personennummer_os_plus",
+          "agreement_id",
           "agreement_reference",
           "agreement_active",
+          "bank_side_visible",
           "vfe_amount_eur",
           "refinancing_quota",
           "value_date_rule",
@@ -16680,6 +17783,26 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Residual Sum"
           },
+          "lessee_count": { "type": "integer", "title": "Lessee Count" },
+          "object_count": { "type": "integer", "title": "Object Count" },
+          "earliest_contract_start": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Earliest Contract Start"
+          },
+          "latest_contract_start": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Latest Contract Start"
+          },
+          "average_term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Average Term Months"
+          },
           "collateral": {
             "anyOf": [
               {
@@ -16703,6 +17826,11 @@
           "contracts",
           "contract_count",
           "residual_sum",
+          "lessee_count",
+          "object_count",
+          "earliest_contract_start",
+          "latest_contract_start",
+          "average_term_months",
           "collateral",
           "financing"
         ],
@@ -16958,6 +18086,18 @@
             "anyOf": [{ "type": "integer" }, { "type": "null" }],
             "title": "Display Order"
           },
+          "phase_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Phase Name"
+          },
+          "phase_position": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Phase Position"
+          },
+          "task_number": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Task Number"
+          },
           "stage_categorization": {
             "anyOf": [
               {
@@ -17010,6 +18150,13 @@
             "title": "Four Eyes",
             "default": false
           },
+          "exclusion_source_task_ids": {
+            "anyOf": [
+              { "items": { "type": "string" }, "type": "array" },
+              { "type": "null" }
+            ],
+            "title": "Exclusion Source Task Ids"
+          },
           "is_decision_step": {
             "type": "boolean",
             "title": "Is Decision Step",
@@ -17019,6 +18166,20 @@
             "type": "boolean",
             "title": "Is No Way Back",
             "default": false
+          },
+          "completion_case_status_target": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Completion Case Status Target"
+          },
+          "completion_entity_targets": {
+            "anyOf": [
+              {
+                "additionalProperties": { "type": "string" },
+                "type": "object"
+              },
+              { "type": "null" }
+            ],
+            "title": "Completion Entity Targets"
           },
           "status": { "$ref": "#/components/schemas/ChecklistItemStatus" },
           "note": {
@@ -17082,7 +18243,7 @@
           },
           "value": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17175,6 +18336,17 @@
             ],
             "title": "Evidence Document Id"
           },
+          "evidence_document_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Evidence Document Name"
+          },
+          "evidence_document_date": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Evidence Document Date"
+          },
           "kind_of_obligation": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Kind Of Obligation"
@@ -17188,6 +18360,8 @@
           "guarantor_partner_id",
           "guarantor_display_name",
           "evidence_document_id",
+          "evidence_document_name",
+          "evidence_document_date",
           "kind_of_obligation"
         ],
         "title": "CollateralListItem",
@@ -17605,7 +18779,7 @@
           },
           "net_instalment": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17616,7 +18790,7 @@
           },
           "contract_residual": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17627,7 +18801,7 @@
           },
           "target_closing_balance": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17673,7 +18847,7 @@
           },
           "non_refinanceable_part": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17684,7 +18858,7 @@
           },
           "special_payment": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17695,7 +18869,7 @@
           },
           "residual_value": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17740,6 +18914,35 @@
               { "type": "null" }
             ],
             "title": "Remarks"
+          },
+          "net_acquisition_costs": {
+            "anyOf": [
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Net Acquisition Costs"
+          },
+          "lease_interest_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 999.99, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Lease Interest Rate"
+          },
+          "due_date_last_instalment": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Due Date Last Instalment"
           },
           "batch_id": {
             "anyOf": [
@@ -17789,7 +18992,7 @@
           },
           "net_instalment": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17800,7 +19003,7 @@
           },
           "contract_residual": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17811,7 +19014,7 @@
           },
           "target_closing_balance": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17857,7 +19060,7 @@
           },
           "non_refinanceable_part": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17868,7 +19071,7 @@
           },
           "special_payment": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17879,7 +19082,7 @@
           },
           "residual_value": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -17924,16 +19127,304 @@
               { "type": "null" }
             ],
             "title": "Remarks"
+          },
+          "net_acquisition_costs": {
+            "anyOf": [
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Net Acquisition Costs"
+          },
+          "lease_interest_rate": {
+            "anyOf": [
+              { "type": "number", "maximum": 999.99, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Lease Interest Rate"
+          },
+          "due_date_last_instalment": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Due Date Last Instalment"
           }
         },
         "type": "object",
         "title": "ContractEdit",
         "description": "The editable fields of an existing contract.\n\nProvenance is not editable and is not accepted here: ``batch_id`` (which delivery) is set once when\nthe contract is created, and ``contract_origin`` (where it came from, PRD1042-1920) is a System field\nwith an open value set (1920-OQ-01) that no caller supplies. Both are read-only on ``ContractRead``."
       },
+      "ContractListItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "case_id": { "type": "string", "format": "uuid", "title": "Case Id" },
+          "lessee_partner_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Lessee Partner Id"
+          },
+          "contract_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Contract Type"
+          },
+          "contract_residual": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Contract Residual"
+          },
+          "deferred_state": {
+            "$ref": "#/components/schemas/ContractDeferredState"
+          },
+          "contract_status": { "$ref": "#/components/schemas/ContractStatus" },
+          "batch_id": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Batch Id"
+          },
+          "contract_origin": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Contract Origin",
+            "description": "Where this contract came from, for reconciling a bulk run's error report against what actually landed. Read-only and system-set. Free-form on purpose: the value set is open on the client side (1920-OQ-01), so no allowed values are documented or enforced yet."
+          },
+          "completeness": {
+            "$ref": "#/components/schemas/ContractCompleteness"
+          },
+          "missing_fields": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Missing Fields"
+          },
+          "removed_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Removed At"
+          },
+          "removal_reason": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Removal Reason"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "short_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Short Name"
+          },
+          "amortisation_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Amortisation Type"
+          },
+          "term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Term Months"
+          },
+          "net_instalment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Net Instalment"
+          },
+          "target_closing_balance": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Target Closing Balance"
+          },
+          "instalment_frequency": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Instalment Frequency"
+          },
+          "leasing_company_contract_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Leasing Company Contract Number"
+          },
+          "deviating_first_due_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Deviating First Due Date"
+          },
+          "mileage_lease": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Mileage Lease"
+          },
+          "contract_start": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Contract Start"
+          },
+          "non_refinanceable_part": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Non Refinanceable Part"
+          },
+          "special_payment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Special Payment"
+          },
+          "residual_value": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Residual Value"
+          },
+          "buy_back_agreement": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Buy Back Agreement"
+          },
+          "put_option": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Put Option"
+          },
+          "sale_and_lease_back": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Sale And Lease Back"
+          },
+          "sublease": {
+            "anyOf": [{ "type": "boolean" }, { "type": "null" }],
+            "title": "Sublease"
+          },
+          "contract_end": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Contract End"
+          },
+          "residual_value_due_on": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Residual Value Due On"
+          },
+          "remarks": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Remarks"
+          },
+          "net_acquisition_costs": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Net Acquisition Costs"
+          },
+          "lease_interest_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Lease Interest Rate"
+          },
+          "due_date_last_instalment": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Due Date Last Instalment"
+          },
+          "amortisation_warning": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Amortisation Warning"
+          },
+          "settlement_blockers": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Settlement Blockers"
+          },
+          "lessee_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lessee Name"
+          },
+          "object_count": {
+            "type": "integer",
+            "title": "Object Count",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_id",
+          "lessee_partner_id",
+          "contract_type",
+          "contract_residual",
+          "deferred_state",
+          "contract_status",
+          "batch_id",
+          "contract_origin",
+          "completeness",
+          "missing_fields",
+          "removed_at",
+          "removal_reason",
+          "created_by",
+          "created_at"
+        ],
+        "title": "ContractListItem",
+        "description": "A contract as the intake wizard's step-2 list renders it (BUG-044 item 2).\n\n``ContractRead`` plus the two figures that row displays and the contract record does not hold:\nthe lessee's NAME (a partner reference) and how many LIVE lease objects it carries (their own\nrows). The click dummy's table is *\"Contract / lessee · Term · Objects\"*, and neither the name\nnor the count could be rendered without one request per row.\n\nExtends ``ContractRead`` rather than restating it — same reasoning as ``ContractWorkSurfaceItem``\nabove, which is a sibling of this shape for the cross-case surface. It stays separate from\n``ContractRead`` so the four single-contract endpoints do not have to resolve two values they\nnever display, and so neither field is ever present-but-unpopulated."
+      },
       "ContractListResponse": {
         "properties": {
           "items": {
-            "items": { "$ref": "#/components/schemas/ContractRead" },
+            "items": { "$ref": "#/components/schemas/ContractListItem" },
             "type": "array",
             "title": "Items"
           },
@@ -18136,6 +19627,33 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Remarks"
           },
+          "net_acquisition_costs": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Net Acquisition Costs"
+          },
+          "lease_interest_rate": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Lease Interest Rate"
+          },
+          "due_date_last_instalment": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Due Date Last Instalment"
+          },
           "amortisation_warning": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Amortisation Warning"
@@ -18183,15 +19701,123 @@
       },
       "ContractStatus": {
         "type": "string",
-        "enum": ["active", "cancelled"],
+        "enum": [
+          "active",
+          "financed",
+          "cancelled",
+          "draft",
+          "submitted",
+          "committed",
+          "rejected",
+          "deferred",
+          "redeemed",
+          "closed"
+        ],
         "title": "ContractStatus",
-        "description": "The contract's own lifecycle status (US-1.56 — the cancellation cascade).\n\nDistinct from ``ContractDeferredState`` (live vs held-back within an open request) and from the\nsoft-delete carriers (``removed_at`` / ``removal_reason``): this is the terminal lifecycle marker a\ncontract carries when its parent case is cancelled. The 44-step matrix's lease-contract value set did\nnot carry ``Cancelled`` (it lists Draft…Closed); the PO's cancellation-cascade decision (Additional\nNotes, 2026-09-11) adds it — every contract of a cancelled case moves to ``CANCELLED`` as a stored\nstatus, not a derivation. The default for a live contract is ``ACTIVE``."
+        "description": "The contract's own lifecycle status (US-1.56 — the cancellation cascade).\n\nDistinct from ``ContractDeferredState`` (live vs held-back within an open request) and from the\nsoft-delete carriers (``removed_at`` / ``removal_reason``): this is the terminal lifecycle marker a\ncontract carries when its parent case is cancelled. The 44-step matrix's lease-contract value set did\nnot carry ``Cancelled`` (it lists Draft…Closed); the PO's cancellation-cascade decision (Additional\nNotes, 2026-09-11) adds it — every contract of a cancelled case moves to ``CANCELLED`` as a stored\nstatus, not a derivation. The default for a live contract is ``ACTIVE``.\n\nBUG-051 added the matrix's remaining seven values so the Workflow Task Catalog can author them as\ncompletion targets. Note ``DEFERRED`` here is the contract's LIFECYCLE status and is a different\nfact from ``ContractDeferredState.DEFERRED``, which says whether a live contract is held back\nwithin an open request. They share a word and a column they will never share."
       },
       "ContractType": {
         "type": "string",
         "enum": ["lease", "hire_purchase"],
         "title": "ContractType",
         "description": "The kind of leasing contract (PRD1042-1925, US 1.9).\n\n``LEASE`` is Leasing, ``HIRE_PURCHASE`` is Mietkauf. The contract type selects which of the two\ncontract documents (``Leasingvertrag`` / ``Mietkaufvertrag``) is the required one — exactly one per\ncase (PRD1042-1794). Mandatory before the bank settlement, not at submission (the draft saves\nwithout it). ``LEASE`` / ``HIRE_PURCHASE`` are a client-side *proposal* for the code names, not yet\nconfirmed — kept isolated here so a rename is one edit. Teilamortisation (amortisation type) and\nKilometerleasing (the mileage flag) are separate facts, NOT contract types."
+      },
+      "ContractWorkSurfaceItem": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "case_id": { "type": "string", "format": "uuid", "title": "Case Id" },
+          "case_reference": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Case Reference"
+          },
+          "leasing_company_contract_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Leasing Company Contract Number"
+          },
+          "short_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Short Name"
+          },
+          "contract_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Contract Type"
+          },
+          "amortisation_type": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Amortisation Type"
+          },
+          "lessee_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lessee Name"
+          },
+          "contract_start": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Contract Start"
+          },
+          "term_months": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Term Months"
+          },
+          "net_instalment": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Net Instalment"
+          },
+          "contract_residual": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Contract Residual"
+          },
+          "deferred_state": {
+            "$ref": "#/components/schemas/ContractDeferredState"
+          },
+          "contract_status": { "$ref": "#/components/schemas/ContractStatus" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_id",
+          "case_reference",
+          "leasing_company_contract_number",
+          "short_name",
+          "contract_type",
+          "amortisation_type",
+          "lessee_name",
+          "contract_start",
+          "term_months",
+          "net_instalment",
+          "contract_residual",
+          "deferred_state",
+          "contract_status"
+        ],
+        "title": "ContractWorkSurfaceItem",
+        "description": "One row of the standalone Contracts surface (US-1.73).\n\nDeliberately NOT ``ContractRead``: that is the per-case detail shape, and this row carries two\nthings it does not — the lessee's NAME and the case's REFERENCE, both resolved once per page.\nA cross-case list that showed a lessee id and a case uuid would be unreadable.\n\nThe click dummy's Object and Financing columns are absent (slice 2): a contract may hold many\nlease objects while the row shows one, which is a decision rather than a guess, and the financing\nlink arrives with the column that displays it."
+      },
+      "ContractWorkSurfaceResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/ContractWorkSurfaceItem" },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": { "type": "integer", "title": "Total" }
+        },
+        "type": "object",
+        "required": ["items", "total"],
+        "title": "ContractWorkSurfaceResponse"
       },
       "CorrectSettlementRequest": {
         "properties": {
@@ -18478,6 +20104,9 @@
           "refinancing_form": {
             "$ref": "#/components/schemas/RefinancingForm"
           },
+          "measurement_basis": {
+            "$ref": "#/components/schemas/MeasurementBasis"
+          },
           "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
           "payment_timing": { "$ref": "#/components/schemas/PaymentTiming" },
           "rate_basis": { "$ref": "#/components/schemas/RateBasis" },
@@ -18561,6 +20190,7 @@
         "required": [
           "template_name",
           "refinancing_form",
+          "measurement_basis",
           "legal_structure",
           "payment_timing",
           "rate_basis"
@@ -18639,6 +20269,45 @@
         "enum": ["pending", "uploaded"],
         "title": "DATEvidenceStatus",
         "description": "The DAT evidence state on a vehicle object (PRD1042-1924).\n\nHeld as **status + upload only** — a DAT value per object is NOT stored (the collateral total sits\non the package, PRD1042-1930). ``PENDING`` once the capture step is opened, ``UPLOADED`` once the\ndocument reference is recorded. A separate approval/verification state belongs to the collateral /\ndocument model, not here — kept to the two states this story owns."
+      },
+      "DashboardResponse": {
+        "properties": {
+          "open_case_count": { "type": "integer", "title": "Open Case Count" },
+          "live_financing_count": {
+            "type": "integer",
+            "title": "Live Financing Count"
+          },
+          "financed_volume_eur": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Financed Volume Eur"
+          },
+          "cases_needing_attention": {
+            "items": { "$ref": "#/components/schemas/CaseListItem" },
+            "type": "array",
+            "title": "Cases Needing Attention"
+          },
+          "portal_cases": {
+            "items": { "$ref": "#/components/schemas/CaseListItem" },
+            "type": "array",
+            "title": "Portal Cases"
+          }
+        },
+        "type": "object",
+        "required": [
+          "open_case_count",
+          "live_financing_count",
+          "financed_volume_eur",
+          "cases_needing_attention",
+          "portal_cases"
+        ],
+        "title": "DashboardResponse",
+        "description": "The bank dashboard (US-1.71) — what is moving through refinancing today.\n\nComposed server-side from the case and financing lists. The counts are over the whole visible\nSET, not over a page: a dashboard that counted a page would report the page.\n\n``financed_volume_eur`` is always null today and says so in its own field rather than by being\nabsent — the click dummy sums a payout per financing and no payout field exists (the financings\nlist documents the same gap and omits the column). The interface must render it as unavailable,\nnot as zero and not as an em dash: a dash on this card would claim the bank financed nothing."
       },
       "DeactivateFARequest": {
         "properties": {
@@ -19312,6 +20981,25 @@
         },
         "type": "object",
         "title": "EditUserRequest"
+      },
+      "ExcludedPaymentResponse": {
+        "properties": {
+          "due_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Due Date"
+          },
+          "amount": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount"
+          },
+          "reason": { "type": "string", "title": "Reason" }
+        },
+        "type": "object",
+        "required": ["due_date", "amount", "reason"],
+        "title": "ExcludedPaymentResponse",
+        "description": "A lease payment left out of the refinanced stream, with the reason (§6.5.8)."
       },
       "FAAgreementLifecycle": {
         "type": "string",
@@ -20759,6 +22447,16 @@
             ],
             "title": "Value Date"
           },
+          "agreed_loan_amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Agreed Loan Amount"
+          },
           "committed_rate": {
             "anyOf": [
               {
@@ -20825,6 +22523,7 @@
           "refinancing_quota_override",
           "effective_quota",
           "value_date",
+          "agreed_loan_amount",
           "committed_rate",
           "committed_rate_expiry",
           "rate_lock_days",
@@ -20861,9 +22560,11 @@
           "draft",
           "calculating",
           "ready_for_setup",
+          "set_up",
           "disbursed",
           "active",
           "ended",
+          "run_out",
           "cancelled"
         ],
         "title": "FinancingStatus",
@@ -20927,6 +22628,11 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Transition Reason"
           },
+          "set_confirmed": {
+            "type": "boolean",
+            "title": "Set Confirmed",
+            "default": false
+          },
           "created_at": {
             "type": "string",
             "format": "date-time",
@@ -20954,11 +22660,18 @@
             "items": { "$ref": "#/components/schemas/GeneratedDocumentRow" },
             "type": "array",
             "title": "Documents"
+          },
+          "locked_type_codes": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Locked Type Codes",
+            "default": []
           }
         },
         "type": "object",
         "required": ["case_id", "documents"],
-        "title": "GeneratedDocumentListResponse"
+        "title": "GeneratedDocumentListResponse",
+        "description": "The case's produced documents, plus which types can no longer be produced.\n\n``locked_type_codes`` carries the step-18 freeze (R4) so the UI can disable the action instead\nof re-deriving a server rule from the financing's returned values. It is keyed by TYPE, not by\nproduced row: a frozen type is refused whether or not one was ever produced."
       },
       "GeneratedDocumentRow": {
         "properties": {
@@ -22365,7 +24078,7 @@
           },
           "acquisition_cost": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -22376,7 +24089,7 @@
           },
           "residual_value": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -22387,7 +24100,7 @@
           },
           "special_payment": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -22398,7 +24111,7 @@
           },
           "market_value": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -22415,7 +24128,7 @@
           },
           "appraised_value": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -22424,12 +24137,30 @@
             ],
             "title": "Appraised Value"
           },
+          "replacement_value": {
+            "anyOf": [
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Replacement Value"
+          },
           "value_as_at": {
             "anyOf": [
               { "type": "string", "format": "date" },
               { "type": "null" }
             ],
             "title": "Value As At"
+          },
+          "market_value_as_at": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Market Value As At"
           },
           "dat_evidence_status": {
             "anyOf": [
@@ -22526,7 +24257,7 @@
           },
           "acquisition_cost": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -22537,7 +24268,7 @@
           },
           "residual_value": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -22548,7 +24279,7 @@
           },
           "special_payment": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -22559,7 +24290,7 @@
           },
           "market_value": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -22576,7 +24307,7 @@
           },
           "appraised_value": {
             "anyOf": [
-              { "type": "number", "minimum": 0.0 },
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -22585,12 +24316,30 @@
             ],
             "title": "Appraised Value"
           },
+          "replacement_value": {
+            "anyOf": [
+              { "type": "number", "maximum": 999999999999.99, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Replacement Value"
+          },
           "value_as_at": {
             "anyOf": [
               { "type": "string", "format": "date" },
               { "type": "null" }
             ],
             "title": "Value As At"
+          },
+          "market_value_as_at": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Market Value As At"
           },
           "dat_evidence_status": {
             "anyOf": [
@@ -22734,12 +24483,29 @@
             ],
             "title": "Appraised Value"
           },
+          "replacement_value": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Replacement Value"
+          },
           "value_as_at": {
             "anyOf": [
               { "type": "string", "format": "date" },
               { "type": "null" }
             ],
             "title": "Value As At"
+          },
+          "market_value_as_at": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Market Value As At"
           },
           "dat_evidence_status": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -22823,7 +24589,9 @@
           "market_value",
           "market_value_indicator",
           "appraised_value",
+          "replacement_value",
           "value_as_at",
+          "market_value_as_at",
           "dat_evidence_status",
           "dat_evidence_document_id",
           "location_and_region",
@@ -22857,9 +24625,20 @@
             "title": "Partner Type"
           },
           "legal_name": { "type": "string", "title": "Legal Name" },
+          "additional_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Additional Name"
+          },
           "legal_form": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Legal Form"
+          },
+          "date_of_incorporation": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Incorporation"
           },
           "country": { "type": "string", "title": "Country" },
           "tax_id_vat": {
@@ -22873,6 +24652,10 @@
           "commercial_register_no": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Commercial Register No"
+          },
+          "industry_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Industry Code"
           },
           "registered_address": {
             "anyOf": [
@@ -22889,11 +24672,14 @@
         "required": [
           "partner_type",
           "legal_name",
+          "additional_name",
           "legal_form",
+          "date_of_incorporation",
           "country",
           "tax_id_vat",
           "lei",
           "commercial_register_no",
+          "industry_code",
           "registered_address",
           "foreign_identifier"
         ],
@@ -22907,9 +24693,20 @@
             "title": "Partner Type"
           },
           "legal_name": { "type": "string", "title": "Legal Name" },
+          "additional_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Additional Name"
+          },
           "legal_form": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Legal Form"
+          },
+          "date_of_incorporation": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Incorporation"
           },
           "country": {
             "type": "string",
@@ -22991,6 +24788,10 @@
               { "type": "null" }
             ],
             "title": "Identity"
+          },
+          "personennummer_os_plus": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Personennummer Os Plus"
           }
         },
         "type": "object",
@@ -23146,7 +24947,7 @@
           },
           "amount": {
             "anyOf": [
-              { "type": "number" },
+              { "type": "number", "minimum": 0.0 },
               {
                 "type": "string",
                 "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
@@ -23154,15 +24955,15 @@
             ],
             "title": "Amount"
           },
-          "is_final": {
-            "type": "boolean",
-            "title": "Is Final",
-            "default": false
+          "row_type": {
+            "$ref": "#/components/schemas/PaymentPlanRowType",
+            "default": "instalment"
           }
         },
         "type": "object",
         "required": ["due_date", "amount"],
-        "title": "ManualPlanRowRequest"
+        "title": "ManualPlanRowRequest",
+        "description": "One hand-entered row. ``row_type`` replaced the old ``is_final`` boolean — finality is now\nderived from the type in the database, so a caller says what the row IS."
       },
       "MarketValueIndicator": {
         "type": "string",
@@ -23290,6 +25091,12 @@
           "document_origin"
         ],
         "title": "MaterializedRequirementResponse"
+      },
+      "MeasurementBasis": {
+        "type": "string",
+        "enum": ["present_value", "ratio_on_acquisition_cost", "agreed_amount"],
+        "title": "MeasurementBasis",
+        "description": "How a refinancing's disbursement is measured (PRD1042-11, US 1.39, §6.5.1).\n\nA property of the bank product template, one per leasing company (D-129) — never a per-deal mode and\nnever inferred from the repayment profile. Member ``SCREAMING_SNAKE``, value lowercase, matching the\n``RefusalReason`` / ``FinancingKind`` idiom."
       },
       "MergeHistoryResponse": {
         "properties": {
@@ -23522,6 +25329,68 @@
         "type": "object",
         "required": ["user"],
         "title": "MfaVerifyResponse"
+      },
+      "MiscDocumentListResponse": {
+        "properties": {
+          "case_id": { "type": "string", "format": "uuid", "title": "Case Id" },
+          "documents": {
+            "items": { "$ref": "#/components/schemas/MiscDocumentResponse" },
+            "type": "array",
+            "title": "Documents"
+          }
+        },
+        "type": "object",
+        "required": ["case_id", "documents"],
+        "title": "MiscDocumentListResponse"
+      },
+      "MiscDocumentResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "document_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Document Id"
+          },
+          "file_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "File Name"
+          },
+          "size": {
+            "anyOf": [{ "type": "integer" }, { "type": "null" }],
+            "title": "Size"
+          },
+          "document_type_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Type Code"
+          },
+          "document_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Label"
+          },
+          "uploaded_at_utc": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At Utc"
+          },
+          "uploaded_at_local": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At Local"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "document_id",
+          "file_name",
+          "size",
+          "document_type_code",
+          "document_label",
+          "uploaded_at_utc",
+          "uploaded_at_local"
+        ],
+        "title": "MiscDocumentResponse",
+        "description": "PRD1042-2263 — one free-form document in a case's Miscellaneous section."
       },
       "ModuleActionRequest": {
         "properties": {
@@ -23762,6 +25631,20 @@
               { "type": "null" }
             ],
             "title": "Special Payment Sum"
+          },
+          "lessee_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Lessee Name"
+          },
+          "lessee_count": {
+            "type": "integer",
+            "title": "Lessee Count",
+            "default": 0
+          },
+          "object_count": {
+            "type": "integer",
+            "title": "Object Count",
+            "default": 0
           }
         },
         "type": "object",
@@ -23870,6 +25753,114 @@
         "required": ["users", "total", "page", "per_page", "total_pages"],
         "title": "PaginatedUsersResponse"
       },
+      "PartnerAddressInput": {
+        "properties": {
+          "label": { "type": "string", "minLength": 1, "title": "Label" },
+          "street": { "type": "string", "minLength": 1, "title": "Street" },
+          "house_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "House Number"
+          },
+          "address_line_2": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Address Line 2"
+          },
+          "postal_code": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Postal Code"
+          },
+          "city": { "type": "string", "minLength": 1, "title": "City" },
+          "state_region": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "State Region"
+          },
+          "country": {
+            "type": "string",
+            "maxLength": 2,
+            "minLength": 2,
+            "title": "Country"
+          },
+          "is_default": {
+            "type": "boolean",
+            "title": "Is Default",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": ["label", "street", "postal_code", "city", "country"],
+        "title": "PartnerAddressInput",
+        "description": "One address as submitted. `label` is what the list shows (\"Registered office\").\n\nWrite-side mandatory fields match `RegisteredAddressInput` so the two capture paths agree;\n`house_number` and `address_line_2` are the click dummy's additions and are optional because a\nGerman address line is frequently \"Landsberger Straße 212\" with the number already in it."
+      },
+      "PartnerAddressListResponse": {
+        "properties": {
+          "items": {
+            "items": { "$ref": "#/components/schemas/PartnerAddressResponse" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["items"],
+        "title": "PartnerAddressListResponse"
+      },
+      "PartnerAddressResponse": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "label": { "type": "string", "title": "Label" },
+          "street": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Street"
+          },
+          "house_number": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "House Number"
+          },
+          "address_line_2": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Address Line 2"
+          },
+          "postal_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Postal Code"
+          },
+          "city": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "City"
+          },
+          "state_region": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "State Region"
+          },
+          "country": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Country"
+          },
+          "is_default": { "type": "boolean", "title": "Is Default" },
+          "status": { "type": "string", "title": "Status" },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "street",
+          "house_number",
+          "address_line_2",
+          "postal_code",
+          "city",
+          "state_region",
+          "country",
+          "is_default",
+          "status",
+          "created_at"
+        ],
+        "title": "PartnerAddressResponse"
+      },
       "PartnerConfirmRequest": {
         "properties": {
           "note": {
@@ -23977,6 +25968,71 @@
         ],
         "title": "PartnerDetailResponse"
       },
+      "PartnerDocumentItem": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "media_object_id": { "type": "string", "title": "Media Object Id" },
+          "file_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "File Name"
+          },
+          "document_type_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Type Code"
+          },
+          "document_type_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Type Name"
+          },
+          "document_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Document Date"
+          },
+          "label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Label"
+          },
+          "uploaded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Uploaded At"
+          },
+          "uploaded_by_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Uploaded By Name"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "media_object_id",
+          "file_name",
+          "document_type_code",
+          "document_type_name",
+          "document_date",
+          "label",
+          "uploaded_at",
+          "uploaded_by_name"
+        ],
+        "title": "PartnerDocumentItem",
+        "description": "One row of the Documents read.\n\n``media_object_id`` is what the interface's \"Open\" streams (``GET /media/{id}``) — the id is\nhanded out rather than a URL, because the file is never public and every read goes through that\nendpoint's authorization (``media/application/access.py``).\n\n``document_type_name`` is resolved from the tenant's document-type registry so the table can\nshow what the registry calls the type today; ``document_type_code`` is the stable identity other\nmodules resolve against. Both travel: the name for the eye, the code for anything mechanical."
+      },
+      "PartnerDocumentsResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "items": {
+            "items": { "$ref": "#/components/schemas/PartnerDocumentItem" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "items"],
+        "title": "PartnerDocumentsResponse"
+      },
       "PartnerListItem": {
         "properties": {
           "partner_id": { "type": "string", "title": "Partner Id" },
@@ -23994,6 +26050,12 @@
             "items": { "type": "string" },
             "type": "array",
             "title": "Roles"
+          },
+          "registered_address": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RegisteredAddress" },
+              { "type": "null" }
+            ]
           }
         },
         "type": "object",
@@ -24088,6 +26150,130 @@
         "required": ["note"],
         "title": "PartnerRejectRequest"
       },
+      "PartnerRelationshipCreateRequest": {
+        "properties": {
+          "other_partner_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Other Partner Id"
+          },
+          "relationship_type": {
+            "$ref": "#/components/schemas/PartnerRelationshipType"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["outgoing", "incoming"],
+            "title": "Direction",
+            "default": "incoming"
+          },
+          "share_percentage": {
+            "anyOf": [
+              { "type": "number", "maximum": 100.0, "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Share Percentage"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          }
+        },
+        "type": "object",
+        "required": ["other_partner_id", "relationship_type"],
+        "title": "PartnerRelationshipCreateRequest",
+        "description": "One directional edge, as the Relationships tab captures it.\n\n``direction`` is what the interface's \"Swap direction\" toggles, and it is the whole reason the\npair is not symmetric: ``outgoing`` means *this party is the `<type>` of the other*, ``incoming``\nmeans *the other is the `<type>` of this party*. The service turns it into which id goes in\nwhich column, so the client never has to know the storage shape."
+      },
+      "PartnerRelationshipItem": {
+        "properties": {
+          "id": { "type": "string", "title": "Id" },
+          "relationship_type": {
+            "type": "string",
+            "title": "Relationship Type"
+          },
+          "direction": {
+            "type": "string",
+            "enum": ["outgoing", "incoming"],
+            "title": "Direction"
+          },
+          "other_partner_id": { "type": "string", "title": "Other Partner Id" },
+          "other_display_name": {
+            "type": "string",
+            "title": "Other Display Name"
+          },
+          "share_percentage": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Share Percentage"
+          },
+          "valid_from": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid From"
+          },
+          "valid_to": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Valid To"
+          },
+          "is_editable": { "type": "boolean", "title": "Is Editable" }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "relationship_type",
+          "direction",
+          "other_partner_id",
+          "other_display_name",
+          "share_percentage",
+          "valid_from",
+          "valid_to",
+          "is_editable"
+        ],
+        "title": "PartnerRelationshipItem",
+        "description": "One row of the Relationships read, told from the asking party's point of view.\n\nThe written-out sentence (\"X is the parent of this party\") is composed by the CLIENT from\n``relationship_type`` + ``direction``, never here: it is UI copy and has to exist in both\nlocales, and this API ships no localized strings.\n\n``is_editable`` is false for the ``beneficial_owner`` rows projected from ``partner_ubo_ownership``\n— they are shown so the table is the whole picture, but they are maintained where their rules\nlive, not on this surface."
+      },
+      "PartnerRelationshipType": {
+        "type": "string",
+        "enum": ["managing_director", "parent", "subsidiary", "shareholder"],
+        "title": "PartnerRelationshipType",
+        "description": "How one party stands to another — the Create-partner modal's Relationships tab.\n\nA relationship is DIRECTIONAL: the row reads *from* **is the <type> of** *to*, which is what the\ninterface's \"Swap direction\" writes. Storing the direction rather than a pair of mirrored rows\nkeeps one fact in one place — \"A is the parent of B\" and \"B is a subsidiary of A\" are the same\nedge read from two ends, and materialising both would let them drift apart.\n\n**`BENEFICIAL_OWNER` is deliberately absent**, although the prototype's picker offers it. That\nfact already has a carrier with rules of its own — :class:`UboOwnershipRecord`: the owner must be\na CONFIRMED legal entity, the target a CONFIRMED natural person, the shares must total no more\nthan 100%, and the set drives ``ubo_completeness_status``. A second table accepting the same fact\nunder looser rules is exactly the drift this module refuses elsewhere, and a party being created\nis DRAFT — so a beneficial-owner row captured there could never satisfy those rules anyway. The\nread path still RETURNS a ``beneficial_owner`` row type, projected from the UBO records and\nmarked not editable, so the tab shows the whole picture out of one carrier per fact."
+      },
+      "PartnerRelationshipsResponse": {
+        "properties": {
+          "partner_id": { "type": "string", "title": "Partner Id" },
+          "items": {
+            "items": { "$ref": "#/components/schemas/PartnerRelationshipItem" },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": ["partner_id", "items"],
+        "title": "PartnerRelationshipsResponse"
+      },
       "PartnerRole": {
         "type": "string",
         "enum": ["lessee", "guarantor", "supplier"],
@@ -24142,6 +26328,10 @@
                 "sole_trader": "#/components/schemas/SoleTraderIdentityInput"
               }
             }
+          },
+          "personennummer_os_plus": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Personennummer Os Plus"
           }
         },
         "type": "object",
@@ -24253,6 +26443,7 @@
       },
       "PaymentPlanEntryResponse": {
         "properties": {
+          "period": { "type": "integer", "title": "Period" },
           "due_date": {
             "type": "string",
             "format": "date",
@@ -24263,18 +26454,29 @@
             "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
             "title": "Amount"
           },
+          "row_type": { "$ref": "#/components/schemas/PaymentPlanRowType" },
           "is_final": { "type": "boolean", "title": "Is Final" },
           "origin": { "type": "string", "title": "Origin" }
         },
         "type": "object",
-        "required": ["due_date", "amount", "is_final", "origin"],
+        "required": [
+          "period",
+          "due_date",
+          "amount",
+          "row_type",
+          "is_final",
+          "origin"
+        ],
         "title": "PaymentPlanEntryResponse",
-        "description": "One entry of a contract's payment plan — date + amount, the residual marked as the final one."
+        "description": "One entry of a contract's payment plan — date + amount, typed, the residual marked final.\n\n``period`` is the row's 1-based position in the plan and is DERIVED at read time, never stored:\na plan is always replaced wholesale, so the ordinal follows from the stored order and a column\nwould only be a second carrier of it that can go stale.\n\n``is_final`` is likewise derived — a generated column over ``row_type`` — and stays on the wire\nbecause existing readers use it."
       },
       "PaymentPlanResponse": {
         "properties": {
           "component": {
-            "$ref": "#/components/schemas/FinancingComponentResponse"
+            "anyOf": [
+              { "$ref": "#/components/schemas/FinancingComponentResponse" },
+              { "type": "null" }
+            ]
           },
           "entries": {
             "items": {
@@ -24287,7 +26489,13 @@
         "type": "object",
         "required": ["component", "entries"],
         "title": "PaymentPlanResponse",
-        "description": "A contract's component + its ordered plan entries."
+        "description": "A contract's plan, and its component when the case has a financing.\n\n``component`` is **null before the case is committed** — the plan is captured during intake, and\nthe financing (and therefore the component) is minted only at commit."
+      },
+      "PaymentPlanRowType": {
+        "type": "string",
+        "enum": ["down_payment", "instalment", "final_payment"],
+        "title": "PaymentPlanRowType",
+        "description": "What one row of a payment plan represents (the prototype's \"Type\" column).\n\nThe click dummy shows three kinds — a down payment, the repeated instalments, and a final\npayment — as hardcoded display text on an inert table, so this SET IS OURS, not the client's:\nit is the smallest vocabulary that renders that table honestly. Extending an output enum later\nis non-breaking (``api-versioning.md`` §3.2); shrinking one is not, which is why it starts at\nthree rather than guessing at more. **Open with CrossLease** — confirm the vocabulary before it\nreaches a report.\n\n``INSTALMENT`` keeps the British spelling used everywhere else in this codebase\n(``InstalmentFrequency``, ``instalment_amount``). The prototype's \"Installment\" is a typo in a\ndemo array, and matching it would be exactly the cross-layer casing mismatch\n``enums-and-constants.md`` exists to prevent."
       },
       "PaymentTiming": {
         "type": "string",
@@ -24363,6 +26571,14 @@
             "title": "Partner Type"
           },
           "full_name": { "type": "string", "title": "Full Name" },
+          "first_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Last Name"
+          },
           "date_of_birth": {
             "type": "string",
             "format": "date",
@@ -24378,6 +26594,10 @@
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "National Id"
           },
+          "industry_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Industry Code"
+          },
           "registered_address": {
             "anyOf": [
               { "$ref": "#/components/schemas/RegisteredAddress" },
@@ -24389,11 +26609,14 @@
         "required": [
           "partner_type",
           "full_name",
+          "first_name",
+          "last_name",
           "date_of_birth",
           "place_of_birth",
           "country",
           "birth_name",
           "national_id",
+          "industry_code",
           "registered_address"
         ],
         "title": "PersonIdentityDetail"
@@ -24406,6 +26629,14 @@
             "title": "Partner Type"
           },
           "full_name": { "type": "string", "title": "Full Name" },
+          "first_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "First Name"
+          },
+          "last_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Last Name"
+          },
           "date_of_birth": {
             "type": "string",
             "format": "date",
@@ -24439,6 +26670,10 @@
           "schufa_no": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
             "title": "Schufa No"
+          },
+          "industry_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Industry Code"
           }
         },
         "type": "object",
@@ -24450,40 +26685,6 @@
           "country"
         ],
         "title": "PersonIdentityInput"
-      },
-      "PhaseGateResponse": {
-        "properties": {
-          "phase": {
-            "$ref": "#/components/schemas/app__modules__workflow_task_catalog__domain__enums__StageCategorization"
-          },
-          "status": { "$ref": "#/components/schemas/PhaseGateStatus" },
-          "gate_approver": {
-            "anyOf": [
-              { "type": "string", "format": "uuid" },
-              { "type": "null" }
-            ],
-            "title": "Gate Approver"
-          },
-          "decided_at": {
-            "anyOf": [
-              { "type": "string", "format": "date-time" },
-              { "type": "null" }
-            ],
-            "title": "Decided At"
-          },
-          "note": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Note"
-          }
-        },
-        "type": "object",
-        "required": ["phase", "status", "gate_approver", "decided_at", "note"],
-        "title": "PhaseGateResponse"
-      },
-      "PhaseGateStatus": {
-        "type": "string",
-        "enum": ["open", "in_review", "approved", "rejected"],
-        "title": "PhaseGateStatus"
       },
       "PhaseProgressResponse": {
         "properties": {
@@ -24791,6 +26992,166 @@
         "type": "object",
         "title": "RecordLoanValuesRequest",
         "description": "Record the core-system returned values on the financing (PRD1042-1941, US 1.25).\n\nBoth are recorded together (one lifecycle). Either may be null — e.g. the loan number is linked to\nan already-registered loan while the account is still pending — but the request always carries both\nslots, so a value is never silently left at its previous state."
+      },
+      "RedemptionCaptureRequest": {
+        "properties": {
+          "amount": {
+            "anyOf": [
+              { "type": "number", "exclusiveMinimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d{0,2}0*$"
+              }
+            ],
+            "title": "Amount",
+            "description": "What is owed, in EUR"
+          },
+          "value_date": {
+            "type": "string",
+            "format": "date",
+            "title": "Value Date",
+            "description": "The date the redemption is effective from"
+          }
+        },
+        "type": "object",
+        "required": ["amount", "value_date"],
+        "title": "RedemptionCaptureRequest",
+        "description": "What is owed to redeem the contract set, and from when.\n\n``amount`` is a STATED figure, not a computed one — the calculation engine's redemption values\nare deferred, and this is the number the bank works out today. Positive: a redemption of zero or\nless is not a correction, it is a mistake."
+      },
+      "RedemptionListItem": {
+        "properties": {
+          "case_id": { "type": "string", "format": "uuid", "title": "Case Id" },
+          "case_reference": { "type": "string", "title": "Case Reference" },
+          "kind": { "$ref": "#/components/schemas/CaseType" },
+          "contract_numbers": {
+            "items": { "type": "string" },
+            "type": "array",
+            "title": "Contract Numbers"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Amount"
+          },
+          "value_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Value Date"
+          },
+          "status": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/RedemptionStatus" },
+              { "type": "null" }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "case_id",
+          "case_reference",
+          "kind",
+          "contract_numbers",
+          "amount",
+          "value_date",
+          "status"
+        ],
+        "title": "RedemptionListItem",
+        "description": "One row of the parent case's Redemption tab.\n\n``kind`` is the case type (single vs package) — derived from how many contracts are affected,\nnever declared. ``contract_numbers`` names those contracts by the leasing company's own number,\nwhich is what a person recognises. Every figure is nullable: a redemption case exists from the\nmoment it is started, before anyone has worked out what it is worth."
+      },
+      "RedemptionListResponse": {
+        "properties": {
+          "redemptions": {
+            "items": { "$ref": "#/components/schemas/RedemptionListItem" },
+            "type": "array",
+            "title": "Redemptions"
+          },
+          "total": { "type": "integer", "title": "Total" },
+          "page": { "type": "integer", "title": "Page" },
+          "per_page": { "type": "integer", "title": "Per Page" },
+          "total_pages": { "type": "integer", "title": "Total Pages" }
+        },
+        "type": "object",
+        "required": ["redemptions", "total", "page", "per_page", "total_pages"],
+        "title": "RedemptionListResponse"
+      },
+      "RedemptionResponse": {
+        "properties": {
+          "id": { "type": "string", "format": "uuid", "title": "Id" },
+          "case_id": { "type": "string", "format": "uuid", "title": "Case Id" },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              },
+              { "type": "null" }
+            ],
+            "title": "Amount"
+          },
+          "value_date": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Value Date"
+          },
+          "status": { "$ref": "#/components/schemas/RedemptionStatus" },
+          "settled_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Settled By"
+          },
+          "settled_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Settled At"
+          },
+          "captured_by": {
+            "anyOf": [
+              { "type": "string", "format": "uuid" },
+              { "type": "null" }
+            ],
+            "title": "Captured By"
+          },
+          "captured_at": {
+            "anyOf": [
+              { "type": "string", "format": "date-time" },
+              { "type": "null" }
+            ],
+            "title": "Captured At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "case_id",
+          "amount",
+          "value_date",
+          "status",
+          "settled_by",
+          "settled_at",
+          "captured_by",
+          "captured_at"
+        ],
+        "title": "RedemptionResponse",
+        "description": "One redemption's figures. ``status`` is ``pending`` until the money lands, then ``settled``\n(terminal — only the settle endpoint moves it)."
+      },
+      "RedemptionStatus": {
+        "type": "string",
+        "enum": ["pending", "settled"],
+        "title": "RedemptionStatus",
+        "description": "Where a redemption stands (US 1.37 follow-up cases, Milestone-1 Redemption tab).\n\nA redemption is a contract set being paid off early. Two values, because that is what the\nprocess distinguishes: the figure has been agreed and is owed (``PENDING``), or the money has\narrived and the redemption is closed (``SETTLED``).\n\nDeliberately NOT a third \"cancelled\" value: a redemption that does not happen is a cancelled\nCASE (``CaseStatus.CANCELLED`` on the follow-up case), not a settled-and-reversed redemption —\nthe case carries the cancellation, this field carries the money.\n\n``SETTLED`` is terminal. It is reached only through the guarded transition in\n``CaseService.settle_redemption``, never by writing the column."
       },
       "RedetermineCollateralRequest": {
         "properties": {
@@ -25556,6 +27917,47 @@
         ],
         "title": "RuntimeRequirementSurfaceResponse"
       },
+      "ScheduleLineResponse": {
+        "properties": {
+          "period_index": { "type": "integer", "title": "Period Index" },
+          "opening_balance": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Opening Balance"
+          },
+          "interest": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Interest"
+          },
+          "principal": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Principal"
+          },
+          "payment": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Payment"
+          },
+          "closing_balance": {
+            "type": "string",
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Closing Balance"
+          }
+        },
+        "type": "object",
+        "required": [
+          "period_index",
+          "opening_balance",
+          "interest",
+          "principal",
+          "payment",
+          "closing_balance"
+        ],
+        "title": "ScheduleLineResponse",
+        "description": "One amortisation-schedule line (§6.5.3). ``payment == interest + principal`` on every line."
+      },
       "SeedPackage": {
         "type": "string",
         "enum": ["standard_retail_bank", "minimal_sandbox"],
@@ -25660,6 +28062,24 @@
         "type": "object",
         "required": ["items"],
         "title": "SelectableTemplatesResponse"
+      },
+      "SetAgreedLoanAmountRequest": {
+        "properties": {
+          "agreed_loan_amount": {
+            "anyOf": [
+              { "type": "number", "minimum": 0.0 },
+              {
+                "type": "string",
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+              }
+            ],
+            "title": "Agreed Loan Amount"
+          }
+        },
+        "type": "object",
+        "required": ["agreed_loan_amount"],
+        "title": "SetAgreedLoanAmountRequest",
+        "description": "Set the AGREED_AMOUNT basis's disbursement input on the financing (§6.5.1).\n\n\"Blank business\": the amount is an input, not computed. Bounded to a non-negative amount at the\nboundary; the basis-applicability check lives in the calculation service, not here."
       },
       "SetCollateralEvidenceRequest": {
         "properties": {
@@ -25831,18 +28251,6 @@
         "type": "object",
         "title": "SetPasswordResponse"
       },
-      "SetPhaseGateRequest": {
-        "properties": {
-          "status": { "$ref": "#/components/schemas/PhaseGateStatus" },
-          "note": {
-            "anyOf": [{ "type": "string" }, { "type": "null" }],
-            "title": "Note"
-          }
-        },
-        "type": "object",
-        "required": ["status"],
-        "title": "SetPhaseGateRequest"
-      },
       "SetRefinancingRateRequest": {
         "properties": {
           "rate": {
@@ -25887,6 +28295,29 @@
             "format": "date",
             "title": "Date Of Birth"
           },
+          "legal_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Legal Name"
+          },
+          "additional_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Additional Name"
+          },
+          "legal_form": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Legal Form"
+          },
+          "date_of_incorporation": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Incorporation"
+          },
+          "industry_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Industry Code"
+          },
           "country": { "type": "string", "title": "Country" },
           "tax_id_vat": {
             "anyOf": [{ "type": "string" }, { "type": "null" }],
@@ -25908,6 +28339,11 @@
           "partner_type",
           "full_name",
           "date_of_birth",
+          "legal_name",
+          "additional_name",
+          "legal_form",
+          "date_of_incorporation",
+          "industry_code",
           "country",
           "tax_id_vat",
           "commercial_register_no",
@@ -25927,6 +28363,29 @@
             "type": "string",
             "format": "date",
             "title": "Date Of Birth"
+          },
+          "legal_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Legal Name"
+          },
+          "additional_name": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Additional Name"
+          },
+          "legal_form": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Legal Form"
+          },
+          "date_of_incorporation": {
+            "anyOf": [
+              { "type": "string", "format": "date" },
+              { "type": "null" }
+            ],
+            "title": "Date Of Incorporation"
+          },
+          "industry_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Industry Code"
           },
           "country": {
             "type": "string",
@@ -27929,6 +30388,21 @@
         "type": "object",
         "title": "UpdateMeRequest"
       },
+      "UpdateMiscDocumentRequest": {
+        "properties": {
+          "document_type_code": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Type Code"
+          },
+          "document_label": {
+            "anyOf": [{ "type": "string" }, { "type": "null" }],
+            "title": "Document Label"
+          }
+        },
+        "type": "object",
+        "title": "UpdateMiscDocumentRequest",
+        "description": "Set/clear the document type + optional label on a miscellaneous document. Both nullable — the\nprototype's picker starts at 'Select' (unset) and the label is optional."
+      },
       "UpdateOrchestrationRequest": {
         "properties": {
           "required_workflow_tasks": {
@@ -28274,6 +30748,12 @@
           "refinancing_form": {
             "anyOf": [
               { "$ref": "#/components/schemas/RefinancingForm" },
+              { "type": "null" }
+            ]
+          },
+          "measurement_basis": {
+            "anyOf": [
+              { "$ref": "#/components/schemas/MeasurementBasis" },
               { "type": "null" }
             ]
           },
@@ -28822,6 +31302,9 @@
           "refinancing_form": {
             "$ref": "#/components/schemas/RefinancingForm"
           },
+          "measurement_basis": {
+            "$ref": "#/components/schemas/MeasurementBasis"
+          },
           "legal_structure": { "$ref": "#/components/schemas/LegalStructure" },
           "payment_timing": { "$ref": "#/components/schemas/PaymentTiming" },
           "rate_basis": { "$ref": "#/components/schemas/RateBasis" },
@@ -28965,6 +31448,7 @@
           "valid_from",
           "valid_until",
           "refinancing_form",
+          "measurement_basis",
           "legal_structure",
           "payment_timing",
           "rate_basis",
