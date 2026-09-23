@@ -109,3 +109,90 @@ export const PartnerConnectionsResponseSchema = z.object({
 export type PartnerConnectionsResponse = z.infer<
   typeof PartnerConnectionsResponseSchema
 >
+
+/**
+ * A party's relationships — `GET /partners/{id}/relationships`.
+ *
+ * The edges of the borrower unit: who owns this party, who it owns, who directs it. `direction`
+ * is what makes an edge readable in one sentence — the same row means "is the parent of" or "is a
+ * subsidiary of" depending on which end you are standing at.
+ */
+export const PartnerRelationshipSchema = z.object({
+  id: z.string(),
+  relationship_type: z.string(),
+  direction: z.string(),
+  other_partner_id: z.string(),
+  other_display_name: z.string(),
+  // Decimal string — an ownership share, and the same rule as every other decimal here.
+  share_percentage: z.string().nullable(),
+  valid_from: z.string().nullable(),
+  valid_to: z.string().nullable(),
+  // False for an edge the registry derived rather than someone recorded.
+  is_editable: z.boolean(),
+})
+export type PartnerRelationship = z.infer<typeof PartnerRelationshipSchema>
+
+export const PartnerRelationshipsResponseSchema = z.object({
+  partner_id: z.string().uuid(),
+  items: z.array(PartnerRelationshipSchema),
+})
+export type PartnerRelationshipsResponse = z.infer<
+  typeof PartnerRelationshipsResponseSchema
+>
+
+/**
+ * Documents held against the party itself — `GET /partners/{id}/documents`.
+ *
+ * Distinct from a case's documents: these outlive any single case, which is the whole reason the
+ * registry keeps them rather than the case does.
+ */
+export const PartnerDocumentSchema = z.object({
+  id: z.string(),
+  media_object_id: z.string(),
+  file_name: z.string().nullable(),
+  document_type_code: z.string().nullable(),
+  document_type_name: z.string().nullable(),
+  document_date: z.string().nullable(),
+  label: z.string().nullable(),
+  uploaded_at: z.string(),
+  uploaded_by_name: z.string().nullable(),
+})
+export type PartnerDocument = z.infer<typeof PartnerDocumentSchema>
+
+export const PartnerDocumentsResponseSchema = z.object({
+  partner_id: z.string().uuid(),
+  items: z.array(PartnerDocumentSchema),
+})
+export type PartnerDocumentsResponse = z.infer<
+  typeof PartnerDocumentsResponseSchema
+>
+
+/**
+ * The party's addresses — `GET /partners/{id}/addresses`.
+ *
+ * Several per party, each labelled: a registered office, an invoice address, a workshop. One is
+ * the default. Retired rather than deleted, so an address a contract was written to stays
+ * readable.
+ */
+export const PartnerAddressSchema = z.object({
+  id: z.string(),
+  label: z.string(),
+  street: z.string().nullable(),
+  house_number: z.string().nullable(),
+  address_line_2: z.string().nullable(),
+  postal_code: z.string().nullable(),
+  city: z.string().nullable(),
+  state_region: z.string().nullable(),
+  country: z.string().nullable(),
+  is_default: z.boolean(),
+  status: z.string(),
+  created_at: z.string(),
+})
+export type PartnerAddress = z.infer<typeof PartnerAddressSchema>
+
+export const PartnerAddressListResponseSchema = z.object({
+  items: z.array(PartnerAddressSchema),
+})
+export type PartnerAddressListResponse = z.infer<
+  typeof PartnerAddressListResponseSchema
+>

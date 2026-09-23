@@ -297,7 +297,9 @@
       "mergeHistory": "Merge history",
       "decisionHistory": "Entscheidungshistorie",
       "assessment": "Bewertung",
-      "connections": "Verbindungen"
+      "connections": "Verbindungen",
+      "relationships": "Beziehungen",
+      "documents": "Dokumente"
     },
     "overview": {
       "identitySectionTitle": "Identity",
@@ -780,6 +782,62 @@
       "co_obligor": "Mitverpflichteter",
       "leasing_company": "Leasinggesellschaft",
       "supplier": "Lieferant"
+    }
+  },
+  "relationships": {
+    "heading": "Beziehungen",
+    "subtitle": "Die Kanten der Kreditnehmereinheit – wer diesen Partner hält, wen er hält, wer ihn führt.",
+    "open": "Öffnen",
+    "empty": {
+      "title": "Keine Beziehungen erfasst",
+      "description": "Dieser Partner ist mit keinem anderen Partner im Register verknüpft."
+    },
+    "columns": {
+      "party": "Verbundener Partner",
+      "type": "Art",
+      "edge": "Die Beziehung im Klartext",
+      "share": "Anteil"
+    },
+    "types": {
+      "parent": "Muttergesellschaft",
+      "subsidiary": "Tochtergesellschaft",
+      "managing_director": "Geschäftsführer",
+      "shareholder": "Gesellschafter",
+      "ubo": "Wirtschaftlich Berechtigter"
+    },
+    "edges": {
+      "parent_of": "{{other}} ist die Muttergesellschaft dieses Partners",
+      "subsidiary_of": "{{other}} ist eine Tochtergesellschaft dieses Partners",
+      "managing_director_of": "{{other}} ist Geschäftsführer dieses Partners",
+      "shareholder_of": "{{other}} ist Gesellschafter dieses Partners"
+    }
+  },
+  "partnerDocuments": {
+    "heading": "Dokumente",
+    "subtitle": "Am Partner hinterlegt – sie überdauern jeden einzelnen Vorgang.",
+    "empty": {
+      "title": "Keine Dokumente zu diesem Partner",
+      "description": "Zum Partner selbst wurde nichts eingereicht."
+    },
+    "columns": {
+      "document": "Dokument",
+      "uploaded": "Hochgeladen",
+      "by": "Von"
+    }
+  },
+  "addresses": {
+    "heading": "Adressen {{count}}",
+    "default": "Standard",
+    "retired": "stillgelegt",
+    "empty": {
+      "title": "Keine Adressen erfasst",
+      "description": "Für diesen Partner ist noch keine Adresse hinterlegt."
+    },
+    "columns": {
+      "label": "Bezeichnung",
+      "address": "Adresse",
+      "country": "Land",
+      "default": "Standard"
     }
   }
 }

@@ -12,7 +12,10 @@ import {
   AssessmentCatalogueResponseSchema,
   AssessmentListResponseSchema,
   AssessmentSchema,
+  PartnerAddressListResponseSchema,
   PartnerConnectionsResponseSchema,
+  PartnerDocumentsResponseSchema,
+  PartnerRelationshipsResponseSchema,
 } from "@/features/partners/api/assessmentSchema"
 import type { Assessment } from "@/features/partners/api/assessmentSchema"
 import {
@@ -468,6 +471,136 @@ export const businessConfigHandlers = [
             status: "closed",
             created_at: "2025-05-12T08:00:00Z",
             closed_at: "2026-06-30T00:00:00Z",
+          },
+        ],
+      })
+    )
+  ),
+
+  http.get(`${API}/partners/:partnerId/relationships`, ({ params }) =>
+    envelope(
+      PartnerRelationshipsResponseSchema.parse({
+        partner_id: params.partnerId as string,
+        items: [
+          {
+            id: mockUuid("a7c1"),
+            relationship_type: "parent",
+            direction: "parent_of",
+            other_partner_id: "00000000-0000-4000-8000-00000000a002",
+            other_display_name: "Müller Immobilien GbR",
+            share_percentage: "74.90",
+            valid_from: "2019-04-01",
+            valid_to: null,
+            is_editable: true,
+          },
+          {
+            id: mockUuid("a7c2"),
+            relationship_type: "managing_director",
+            direction: "managing_director_of",
+            other_partner_id: "00000000-0000-4000-8000-00000000a005",
+            other_display_name: "Josef Müller",
+            // A directorship carries no share — the column has to survive that.
+            share_percentage: null,
+            valid_from: "2019-04-01",
+            valid_to: null,
+            is_editable: true,
+          },
+          {
+            id: mockUuid("a7c3"),
+            relationship_type: "subsidiary",
+            direction: "subsidiary_of",
+            other_partner_id: "00000000-0000-4000-8000-00000000a003",
+            other_display_name: "Müller Logistik UG",
+            share_percentage: "100.00",
+            valid_from: "2021-01-01",
+            valid_to: null,
+            // Derived by the registry rather than recorded by hand.
+            is_editable: false,
+          },
+        ],
+      })
+    )
+  ),
+
+  http.get(`${API}/partners/:partnerId/documents`, ({ params }) =>
+    envelope(
+      PartnerDocumentsResponseSchema.parse({
+        partner_id: params.partnerId as string,
+        items: [
+          {
+            id: mockUuid("a7d1"),
+            media_object_id: mockUuid("a7e1"),
+            file_name: "BWA_2025.pdf",
+            document_type_code: "MANAGEMENT_ACCOUNTS",
+            document_type_name: "Management accounts",
+            document_date: "2025-12-31",
+            label: "Management accounts 2025",
+            uploaded_at: "2026-02-02T09:14:00Z",
+            uploaded_by_name: "A. Berger",
+          },
+          {
+            id: mockUuid("a7d2"),
+            media_object_id: mockUuid("a7e2"),
+            file_name: "Handelsregisterauszug.pdf",
+            document_type_code: "COMMERCIAL_REGISTER",
+            document_type_name: "Commercial register extract",
+            document_date: null,
+            // No label — the file name has to carry the row on its own.
+            label: null,
+            uploaded_at: "2026-07-14T10:58:00Z",
+            uploaded_by_name: "M. Renkl",
+          },
+        ],
+      })
+    )
+  ),
+
+  http.get(`${API}/partners/:partnerId/addresses`, () =>
+    envelope(
+      PartnerAddressListResponseSchema.parse({
+        items: [
+          {
+            id: mockUuid("a7a1"),
+            label: "Registered office",
+            street: "Landsberger Straße",
+            house_number: "212",
+            address_line_2: null,
+            postal_code: "80687",
+            city: "München",
+            state_region: null,
+            country: "DE",
+            is_default: true,
+            status: "active",
+            created_at: "2019-04-01T08:00:00Z",
+          },
+          {
+            id: mockUuid("a7a2"),
+            label: "Invoice address",
+            street: null,
+            house_number: null,
+            address_line_2: "Postfach 44 07 12",
+            postal_code: "80687",
+            city: "München",
+            state_region: null,
+            country: "DE",
+            is_default: false,
+            status: "active",
+            created_at: "2020-06-15T08:00:00Z",
+          },
+          {
+            // Retired, and still listed: a contract was written to it.
+            id: mockUuid("a7a3"),
+            label: "Workshop Munich East",
+            street: "Gewerbering",
+            house_number: "8",
+            address_line_2: null,
+            postal_code: "85652",
+            city: "Pliening",
+            state_region: null,
+            country: "DE",
+            is_default: false,
+            status: "retired",
+            created_at: "2021-03-02T08:00:00Z",
           },
         ],
       })

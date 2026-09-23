@@ -297,7 +297,9 @@
       "mergeHistory": "Merge history",
       "decisionHistory": "Decision history",
       "assessment": "Assessment",
-      "connections": "Connections"
+      "connections": "Connections",
+      "relationships": "Relationships",
+      "documents": "Documents"
     },
     "overview": {
       "identitySectionTitle": "Identity",
@@ -780,6 +782,62 @@
       "co_obligor": "Co-obligor",
       "leasing_company": "Leasing company",
       "supplier": "Supplier"
+    }
+  },
+  "relationships": {
+    "heading": "Relationships",
+    "subtitle": "The edges of the borrower unit — who owns this party, who it owns, who directs it.",
+    "open": "Open",
+    "empty": {
+      "title": "No relationships recorded",
+      "description": "This party is not linked to another party in the registry."
+    },
+    "columns": {
+      "party": "Related party",
+      "type": "Type",
+      "edge": "The edge, written out",
+      "share": "Share"
+    },
+    "types": {
+      "parent": "Parent",
+      "subsidiary": "Subsidiary",
+      "managing_director": "Managing director",
+      "shareholder": "Shareholder",
+      "ubo": "UBO"
+    },
+    "edges": {
+      "parent_of": "{{other}} is the parent of this party",
+      "subsidiary_of": "{{other}} is a subsidiary of this party",
+      "managing_director_of": "{{other}} is a managing director of this party",
+      "shareholder_of": "{{other}} is a shareholder of this party"
+    }
+  },
+  "partnerDocuments": {
+    "heading": "Documents",
+    "subtitle": "Kept on the party — they outlive any single case.",
+    "empty": {
+      "title": "No documents on this party",
+      "description": "Nothing has been filed against the party itself."
+    },
+    "columns": {
+      "document": "Document",
+      "uploaded": "Uploaded",
+      "by": "By"
+    }
+  },
+  "addresses": {
+    "heading": "Addresses {{count}}",
+    "default": "default",
+    "retired": "retired",
+    "empty": {
+      "title": "No addresses recorded",
+      "description": "This party has no address on the registry yet."
+    },
+    "columns": {
+      "label": "Label",
+      "address": "Address",
+      "country": "Country",
+      "default": "Default"
     }
   }
 }

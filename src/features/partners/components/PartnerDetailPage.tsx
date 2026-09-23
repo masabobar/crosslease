@@ -22,6 +22,9 @@ import {
 import { ResolutionCandidatesTab } from "@/features/partners/components/tabs/ResolutionCandidatesTab"
 import { AssessmentTab } from "@/features/partners/components/tabs/AssessmentTab"
 import { ConnectionsTab } from "@/features/partners/components/tabs/ConnectionsTab"
+import { PartnerAddressesPanel } from "@/features/partners/components/PartnerAddressesPanel"
+import { RelationshipsTab } from "@/features/partners/components/tabs/RelationshipsTab"
+import { PartnerDocumentsTab } from "@/features/partners/components/tabs/PartnerDocumentsTab"
 import { RolesTab } from "@/features/partners/components/tabs/RolesTab"
 import { UboTab } from "@/features/partners/components/tabs/UboTab"
 import { IdentityChangesTab } from "@/features/partners/components/tabs/IdentityChangesTab"
@@ -51,6 +54,8 @@ type TabKey =
   | "overview"
   | "assessment"
   | "connections"
+  | "relationships"
+  | "documents"
   | "resolution"
   | "roles"
   | "ubo"
@@ -260,6 +265,16 @@ export default function PartnerDetailPage() {
               label: t("detail.tabs.connections"),
               testId: "tab-connections",
             },
+            {
+              key: "relationships" as const,
+              label: t("detail.tabs.relationships"),
+              testId: "tab-relationships",
+            },
+            {
+              key: "documents" as const,
+              label: t("detail.tabs.documents"),
+              testId: "tab-documents",
+            },
             ...(showResolutionTab
               ? [
                   {
@@ -309,8 +324,13 @@ export default function PartnerDetailPage() {
           className="px-3"
         />
         <div className="bg-card border border-border rounded-b-[10px] px-3 pt-3">
+          {/* The prototype puts the addresses beside the identity on this tab — a party's
+              addresses are part of who it is, not a screen of their own. */}
           {activeTab === "overview" && (
-            <OverviewTab partner={partner} roles={rolesData?.roles ?? []} />
+            <div className="flex flex-col gap-6">
+              <OverviewTab partner={partner} roles={rolesData?.roles ?? []} />
+              <PartnerAddressesPanel partnerId={partner.partner_id} />
+            </div>
           )}
           {activeTab === "resolution" && showResolutionTab && (
             <ResolutionCandidatesTab partnerId={partner.partner_id} />
@@ -320,6 +340,12 @@ export default function PartnerDetailPage() {
           )}
           {activeTab === "connections" && (
             <ConnectionsTab partnerId={partner.partner_id} />
+          )}
+          {activeTab === "relationships" && (
+            <RelationshipsTab partnerId={partner.partner_id} />
+          )}
+          {activeTab === "documents" && (
+            <PartnerDocumentsTab partnerId={partner.partner_id} />
           )}
           {activeTab === "roles" && <RolesTab partnerId={partner.partner_id} />}
           {activeTab === "ubo" && (
