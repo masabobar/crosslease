@@ -59,7 +59,7 @@
     "notificationConfiguration": "Benachrichtigungskonfiguration",
     "tenantManagement": "Mandantenverwaltung",
     "createTenant": "Mandant erstellen",
-    "partnerManagement": "Partnerverwaltung",
+    "partnerManagement": "Partnerregister",
     "submitPartner": "Partner einreichen",
     "duplicateQueue": "Duplikat-Warteschlange",
     "cases": "Fälle"

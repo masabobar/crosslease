@@ -59,7 +59,7 @@
     "notificationConfiguration": "Notification configuration",
     "tenantManagement": "Tenant management",
     "createTenant": "Create tenant",
-    "partnerManagement": "Partner management",
+    "partnerManagement": "Partner registry",
     "submitPartner": "Submit partner",
     "duplicateQueue": "Duplication queue",
     "cases": "Cases"

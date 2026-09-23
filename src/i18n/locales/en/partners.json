@@ -288,7 +288,7 @@
       "roles": "Role(s)"
     },
     "tabs": {
-      "overview": "Overview",
+      "overview": "Party",
       "resolutionCandidates": "Resolution Candidates",
       "roles": "Roles",
       "ubo": "UBO ownership",
@@ -299,7 +299,8 @@
       "assessment": "Assessment",
       "connections": "Connections",
       "relationships": "Relationships",
-      "documents": "Documents"
+      "documents": "Documents",
+      "bankAccounts": "Bank accounts"
     },
     "overview": {
       "identitySectionTitle": "Identity",

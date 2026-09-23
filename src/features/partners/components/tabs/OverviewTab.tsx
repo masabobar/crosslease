@@ -6,7 +6,6 @@ import {
 import { PartnerIdentityFields } from "@/features/partners/components/PartnerIdentityFields"
 import { PartnerTypeBadge } from "@/features/partners/components/PartnerTypeBadge"
 import { DealerNumbersSection } from "@/features/partners/components/DealerNumbersSection"
-import { BankAccountsSection } from "@/features/partners/components/BankAccountsSection"
 import { UBO_STATUS_DOT_COLOR } from "@/features/partners/constants"
 import { PartnerTypeSchema } from "@/features/partners/api/schema"
 import type {
@@ -78,12 +77,10 @@ function OverviewTab({ partner, roles }: OverviewTabProps) {
         </div>
       </div>
 
-      {isLegalEntity && (
-        <>
-          <DealerNumbersSection partnerId={partner.partner_id} />
-          <BankAccountsSection partnerId={partner.partner_id} />
-        </>
-      )}
+      {/* Bank accounts moved to a tab of its own, as the prototype has it — at the foot of this
+          tab it was behind the whole identity block, which is not where a reader looks for an
+          IBAN. */}
+      {isLegalEntity && <DealerNumbersSection partnerId={partner.partner_id} />}
     </div>
   )
 }

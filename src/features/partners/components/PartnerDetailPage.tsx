@@ -37,6 +37,14 @@ import { RejectPartnerDialog } from "@/features/partners/components/RejectPartne
 import { ProposeIdentityChangeDialog } from "@/features/partners/components/ProposeIdentityChangeDialog"
 import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
 import { usePartnerRoles } from "@/features/partners/hooks/usePartnerRoles"
+import { useBankAccounts } from "@/features/partners/hooks/useBankAccounts"
+import {
+  usePartnerAssessments,
+  usePartnerConnections,
+  usePartnerDocuments,
+  usePartnerRelationships,
+} from "@/features/partners/hooks/useAssessments"
+import { BankAccountsSection } from "@/features/partners/components/BankAccountsSection"
 import { useCurrentUser } from "@/features/users/hooks/useCurrentUser"
 import {
   PartnerStatusSchema,
@@ -53,6 +61,7 @@ import {
 type TabKey =
   | "overview"
   | "assessment"
+  | "bank-accounts"
   | "connections"
   | "relationships"
   | "documents"
@@ -63,6 +72,16 @@ type TabKey =
   | "confirmation-history"
   | "merge-history"
   | "decision-history"
+
+/**
+ * `Documents 2` — the tab's name with how much is behind it.
+ *
+ * Undefined while the query is in flight rather than zero: a tab that flashes "0" and then says
+ * "3" reads as data that changed, not as data that arrived.
+ */
+function withCount(label: string, count: number | undefined): string {
+  return count === undefined ? label : `${label} ${count}`
+}
 
 export default function PartnerDetailPage() {
   const { t } = useTranslation("partners")
@@ -78,6 +97,15 @@ export default function PartnerDetailPage() {
   const { data: rolesData, isError: isRolesError } = usePartnerRoles(
     partner?.partner_id ?? null
   )
+
+  // Read here only to put a count beside each tab. Every one of these is the same query its tab
+  // runs, so React Query serves the tab from cache the moment it opens — the counts cost nothing
+  // beyond the first load.
+  const assessments = usePartnerAssessments(partner?.partner_id)
+  const bankAccounts = useBankAccounts(partner?.partner_id ?? "")
+  const connections = usePartnerConnections(partner?.partner_id)
+  const relationships = usePartnerRelationships(partner?.partner_id)
+  const partnerDocuments = usePartnerDocuments(partner?.partner_id)
 
   const [archiveOpen, setArchiveOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -248,31 +276,54 @@ export default function PartnerDetailPage() {
         <UnderlineTabBar
           tabClassName="pb-1"
           tabs={[
+            // The prototype's order and its counts. A count beside a tab is how a reader decides
+            // whether opening it is worth the click — "Documents 2" and "Documents" are different
+            // pieces of information, and all five come from data these tabs already fetch.
             {
               key: "overview" as const,
               label: t("detail.tabs.overview"),
               testId: "tab-overview",
             },
-            // The prototype's second partner tab. Its endpoints landed on 16 Sep; before that it
-            // had no backing at all, which is why it is only here now.
             {
               key: "assessment" as const,
-              label: t("detail.tabs.assessment"),
+              label: withCount(
+                t("detail.tabs.assessment"),
+                assessments.data?.items.length
+              ),
               testId: "tab-assessment",
+            },
+            // Bank accounts had no tab of its own at all — the section was buried at the foot of
+            // the Party tab, where the prototype's reader would never look for it.
+            {
+              key: "bank-accounts" as const,
+              label: withCount(
+                t("detail.tabs.bankAccounts"),
+                bankAccounts.data?.items.length
+              ),
+              testId: "tab-bank-accounts",
             },
             {
               key: "connections" as const,
-              label: t("detail.tabs.connections"),
+              label: withCount(
+                t("detail.tabs.connections"),
+                connections.data?.items.length
+              ),
               testId: "tab-connections",
             },
             {
               key: "relationships" as const,
-              label: t("detail.tabs.relationships"),
+              label: withCount(
+                t("detail.tabs.relationships"),
+                relationships.data?.items.length
+              ),
               testId: "tab-relationships",
             },
             {
               key: "documents" as const,
-              label: t("detail.tabs.documents"),
+              label: withCount(
+                t("detail.tabs.documents"),
+                partnerDocuments.data?.items.length
+              ),
               testId: "tab-documents",
             },
             ...(showResolutionTab
@@ -340,6 +391,9 @@ export default function PartnerDetailPage() {
           )}
           {activeTab === "connections" && (
             <ConnectionsTab partnerId={partner.partner_id} />
+          )}
+          {activeTab === "bank-accounts" && (
+            <BankAccountsSection partnerId={partner.partner_id} />
           )}
           {activeTab === "relationships" && (
             <RelationshipsTab partnerId={partner.partner_id} />
