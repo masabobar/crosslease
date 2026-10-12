@@ -8,6 +8,7 @@ import {
 import { RouterProvider } from "react-router-dom"
 import { router } from "@/router"
 import { THIRTY_SECONDS_MS } from "@/lib/constants"
+import { ApiError } from "@/lib/api"
 import { resolveApiErrorMessage } from "@/lib/apiErrorMessage"
 import { useToastStore } from "@/store/toastStore"
 import { i18n } from "@/i18n/config"
@@ -31,7 +32,24 @@ const queryClient = new QueryClient({
       })
     },
   }),
-  defaultOptions: { queries: { staleTime: THIRTY_SECONDS_MS } },
+  defaultOptions: {
+    queries: {
+      staleTime: THIRTY_SECONDS_MS,
+      /**
+       * Retry transport and server failures; never a 4xx.
+       *
+       * The default retried everything three times with a growing backoff, so a record that does
+       * not exist left its screen on a loading skeleton for seven seconds before admitting the
+       * 404 — a reader cannot tell that from a slow network, and the answer was never going to
+       * change. A 404, a 403 or a 422 is a settled answer; a 5xx or a dropped connection is not.
+       */
+      retry: (failureCount, error) => {
+        const status = error instanceof ApiError ? error.status : undefined
+        if (status !== undefined && status >= 400 && status < 500) return false
+        return failureCount < 2
+      },
+    },
+  },
 })
 
 function render(banner?: React.ReactNode) {

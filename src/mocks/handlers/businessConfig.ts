@@ -20,6 +20,10 @@ import {
 import type { Assessment } from "@/features/partners/api/assessmentSchema"
 import {
   BankAccountListResponseSchema,
+  ConfirmationHistoryResponseSchema,
+  IdentityHistoryResponseSchema,
+  PartnerUboResponseSchema,
+  UboCompletenessStatusSchema,
   DuplicatePairListResponseSchema,
   PartnerRolesResponseSchema,
   PartnerDetailResponseSchema,
@@ -514,6 +518,132 @@ export const businessConfigHandlers = [
    * on. One entry carries a masked change, because a redacted value has to read as withheld
    * rather than as an empty field someone cleared.
    */
+  /**
+   * UBO ownership, the confirmation history and the identity-change history.
+   *
+   * All three are real endpoints that were answering 501 because nothing mocked them — so three
+   * working screens read as broken ones. Each fixture carries the state the screen exists to show
+   * rather than the easy case: an ownership chain that is only PARTIAL, a rejection with its
+   * reason, and an identity change still waiting for its second pair of eyes.
+   */
+  http.get(`${API}/partners/:partnerId/ubo`, () =>
+    envelope(
+      PartnerUboResponseSchema.parse({
+        // Partial, not complete: the two recorded holdings come to 85 %, and the gap is the whole
+        // reason this screen is looked at.
+        ubo_completeness_status: UboCompletenessStatusSchema.enum.partial,
+        records: [
+          {
+            id: mockUuid("a9b1"),
+            ubo_partner_id: "00000000-0000-4000-8000-00000000a005",
+            ubo_display_name: "Josef Müller",
+            ownership_percentage: "60.00",
+            ownership_type: "direct",
+            indirect_ownership_notes: null,
+            captured_by: {
+              user_id: "00000000-0000-4000-8000-000000000005",
+              display_name: "A. Berger",
+              email: "a.berger@prototype.example.com",
+            },
+            captured_at: "2026-02-04T09:10:00Z",
+          },
+          {
+            id: mockUuid("a9b2"),
+            ubo_partner_id: "00000000-0000-4000-8000-00000000a002",
+            ubo_display_name: "Müller Immobilien GbR",
+            ownership_percentage: "25.00",
+            ownership_type: "indirect",
+            indirect_ownership_notes:
+              "Held through the parent; chain confirmed against the register extract.",
+            captured_by: {
+              user_id: "00000000-0000-4000-8000-000000000005",
+              display_name: "A. Berger",
+              email: "a.berger@prototype.example.com",
+            },
+            captured_at: "2026-02-04T09:14:00Z",
+          },
+        ],
+      })
+    )
+  ),
+
+  http.get(`${API}/partners/:partnerId/confirmation-history`, () =>
+    envelope(
+      ConfirmationHistoryResponseSchema.parse({
+        items: [
+          {
+            id: mockUuid("a9c1"),
+            status: "confirmed",
+            captured_by: "Thomas Weber",
+            captured_on: "2026-02-04T09:20:00Z",
+            note: "Register extract and VAT number checked.",
+          },
+          {
+            // Rejected once before: the reason is the record of why, and it has to stay readable.
+            id: mockUuid("a9c2"),
+            status: "rejected",
+            captured_by: "Thomas Weber",
+            captured_on: "2026-01-28T11:02:00Z",
+            note: "Submitted name did not match the register extract.",
+          },
+          {
+            id: mockUuid("a9c3"),
+            status: "draft",
+            captured_by: "A. Berger",
+            captured_on: "2026-01-26T08:00:00Z",
+            note: null,
+          },
+        ],
+        next_cursor: null,
+      })
+    )
+  ),
+
+  http.get(`${API}/partners/:partnerId/identity-changes`, ({ params }) =>
+    envelope(
+      IdentityHistoryResponseSchema.parse({
+        partner_id: params.partnerId as string,
+        items: [
+          {
+            identity_change_id: mockUuid("a9d1"),
+            // A high-risk anchor, so it waits for a second person rather than committing itself.
+            target_anchors: ["tax_id_vat"],
+            pre_change_snapshot: { tax_id_vat: "DE 812 447 903" },
+            proposed_values: { tax_id_vat: "DE 812 447 911" },
+            change_reason: "Tax office issued a corrected VAT number.",
+            is_high_risk: true,
+            status: "pending_four_eyes",
+            proposed_by: {
+              user_id: "00000000-0000-4000-8000-000000000005",
+              display_name: "A. Berger",
+              role: "front_office",
+            },
+            proposed_at: "2026-08-28T07:40:00Z",
+            resolved_at: null,
+            counter_confirmed_by: null,
+          },
+          {
+            identity_change_id: mockUuid("a9d2"),
+            target_anchors: ["legal_name"],
+            pre_change_snapshot: { legal_name: "Müller Nutzfahrzeuge GbR" },
+            proposed_values: { legal_name: "Müller Nutzfahrzeuge GmbH" },
+            change_reason: "Change of legal form recorded in the register.",
+            is_high_risk: false,
+            status: "committed",
+            proposed_by: {
+              user_id: "00000000-0000-4000-8000-000000000005",
+              display_name: "A. Berger",
+              role: "front_office",
+            },
+            proposed_at: "2026-07-02T09:00:00Z",
+            resolved_at: "2026-07-02T09:00:00Z",
+            counter_confirmed_by: null,
+          },
+        ],
+      })
+    )
+  ),
+
   http.get(`${API}/partners/:partnerId/activity`, () =>
     envelope(
       CaseActivityResponseSchema.parse({

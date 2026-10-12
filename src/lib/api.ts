@@ -10,6 +10,10 @@ const ApiErrorEnvelopeSchema = z.object({
 
 export class ApiError extends Error {
   code: string
+  // The HTTP status, where the request reached the server at all. Carried because the retry
+  // policy needs it: a 404 or a 403 will not become a 200 by asking again, while a 5xx or a
+  // dropped connection might. Undefined for a transport failure, which has no status.
+  status?: number
   field?: string
   errors?: Array<{ field: string; message: string; input: unknown }>
 
@@ -17,13 +21,15 @@ export class ApiError extends Error {
     code: string,
     message: string,
     field?: string,
-    errors?: Array<{ field: string; message: string; input: unknown }>
+    errors?: Array<{ field: string; message: string; input: unknown }>,
+    status?: number
   ) {
     super(message)
     this.name = "ApiError"
     this.code = code
     this.field = field
     this.errors = errors
+    this.status = status
   }
 }
 
@@ -107,7 +113,8 @@ api.interceptors.response.use(
       detail?.code ?? fallbackCode,
       detail?.message ?? "Something went wrong",
       detail?.field,
-      detail?.errors
+      detail?.errors,
+      error.response?.status
     )
   }
 )
