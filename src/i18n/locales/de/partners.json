@@ -300,7 +300,8 @@
       "connections": "Verbindungen",
       "relationships": "Beziehungen",
       "documents": "Dokumente",
-      "bankAccounts": "Bankkonten"
+      "bankAccounts": "Bankkonten",
+      "activity": "Aktivität"
     },
     "overview": {
       "identitySectionTitle": "Identity",
@@ -839,6 +840,45 @@
       "address": "Adresse",
       "country": "Land",
       "default": "Standard"
+    }
+  },
+  "partnerActivity": {
+    "comments": "Kommentare",
+    "bankOnly": "Nur Bank",
+    "add": "Kommentar hinzufügen",
+    "cancel": "Abbrechen",
+    "placeholder": "Kommentar zu diesem Partner schreiben",
+    "commentAdded": "Kommentar hinzugefügt.",
+    "edited": "bearbeitet",
+    "noComments": "Zu diesem Partner wurde noch nichts geschrieben.",
+    "trail": "Aktivität",
+    "notEditable": "Systemseitig erfasst · nicht bearbeitbar",
+    "noActivity": "Zu diesem Partner wurde noch nichts erfasst.",
+    "system": "System",
+    "previous": "Zurück",
+    "next": "Weiter",
+    "pageOf": "Seite {{page}} von {{total}}",
+    "events": {
+      "partner_created": "Partner angelegt",
+      "partner_confirmed": "Partner bestätigt",
+      "partner_updated": "Partner geändert",
+      "bank_account_added": "Bankkonto hinzugefügt",
+      "bank_account_closed": "Bankkonto geschlossen",
+      "assessment_recorded": "Bewertung erfasst",
+      "assessment_cancelled": "Bewertung storniert",
+      "document_uploaded": "Dokument hochgeladen",
+      "duplicate_check_run": "Dublettenprüfung ausgeführt",
+      "identity_change_proposed": "Identitätsänderung vorgeschlagen"
+    },
+    "masked": "Wert zurückgehalten",
+    "roles": {
+      "front_office": "Front Office",
+      "back_office": "Back Office",
+      "bank_power_user": "Power User",
+      "auditor": "Prüfer",
+      "system_admin": "Systemadministrator",
+      "support_user": "Support",
+      "leasing_company_user": "Leasinggesellschaft"
     }
   }
 }

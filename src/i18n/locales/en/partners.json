@@ -300,7 +300,8 @@
       "connections": "Connections",
       "relationships": "Relationships",
       "documents": "Documents",
-      "bankAccounts": "Bank accounts"
+      "bankAccounts": "Bank accounts",
+      "activity": "Activity"
     },
     "overview": {
       "identitySectionTitle": "Identity",
@@ -839,6 +840,45 @@
       "address": "Address",
       "country": "Country",
       "default": "Default"
+    }
+  },
+  "partnerActivity": {
+    "comments": "Comments",
+    "bankOnly": "Bank only",
+    "add": "Add comment",
+    "cancel": "Cancel",
+    "placeholder": "Write a comment about this party",
+    "commentAdded": "Comment added.",
+    "edited": "edited",
+    "noComments": "Nothing has been written about this party yet.",
+    "trail": "Activity",
+    "notEditable": "System-written · not editable",
+    "noActivity": "Nothing has been recorded against this party yet.",
+    "system": "System",
+    "previous": "Previous",
+    "next": "Next",
+    "pageOf": "Page {{page}} of {{total}}",
+    "events": {
+      "partner_created": "Party created",
+      "partner_confirmed": "Party confirmed",
+      "partner_updated": "Party updated",
+      "bank_account_added": "Bank account added",
+      "bank_account_closed": "Bank account closed",
+      "assessment_recorded": "Assessment recorded",
+      "assessment_cancelled": "Assessment cancelled",
+      "document_uploaded": "Document uploaded",
+      "duplicate_check_run": "Duplicate check run",
+      "identity_change_proposed": "Identity change proposed"
+    },
+    "masked": "value withheld",
+    "roles": {
+      "front_office": "Front Office",
+      "back_office": "Back Office",
+      "bank_power_user": "Power User",
+      "auditor": "Auditor",
+      "system_admin": "System Admin",
+      "support_user": "Support",
+      "leasing_company_user": "Leasing Company User"
     }
   }
 }

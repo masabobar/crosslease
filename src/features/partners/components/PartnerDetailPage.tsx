@@ -23,6 +23,7 @@ import { ResolutionCandidatesTab } from "@/features/partners/components/tabs/Res
 import { AssessmentTab } from "@/features/partners/components/tabs/AssessmentTab"
 import { ConnectionsTab } from "@/features/partners/components/tabs/ConnectionsTab"
 import { PartnerAddressesPanel } from "@/features/partners/components/PartnerAddressesPanel"
+import { PartnerActivityTab } from "@/features/partners/components/tabs/PartnerActivityTab"
 import { RelationshipsTab } from "@/features/partners/components/tabs/RelationshipsTab"
 import { PartnerDocumentsTab } from "@/features/partners/components/tabs/PartnerDocumentsTab"
 import { RolesTab } from "@/features/partners/components/tabs/RolesTab"
@@ -65,6 +66,7 @@ type TabKey =
   | "connections"
   | "relationships"
   | "documents"
+  | "activity"
   | "resolution"
   | "roles"
   | "ubo"
@@ -326,6 +328,11 @@ export default function PartnerDetailPage() {
               ),
               testId: "tab-documents",
             },
+            {
+              key: "activity" as const,
+              label: t("detail.tabs.activity"),
+              testId: "tab-activity",
+            },
             ...(showResolutionTab
               ? [
                   {
@@ -400,6 +407,9 @@ export default function PartnerDetailPage() {
           )}
           {activeTab === "documents" && (
             <PartnerDocumentsTab partnerId={partner.partner_id} />
+          )}
+          {activeTab === "activity" && (
+            <PartnerActivityTab partnerId={partner.partner_id} />
           )}
           {activeTab === "roles" && <RolesTab partnerId={partner.partner_id} />}
           {activeTab === "ubo" && (

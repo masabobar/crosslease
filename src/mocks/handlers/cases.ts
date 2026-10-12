@@ -225,6 +225,9 @@ function pushActivity(
       actor_type: "user",
       actor_display: "Front Office",
       actor_role_at_time: getMockRole(),
+      is_system: false,
+      reason: null,
+      changes: [],
       old_data: null,
       changed_fields:
         fields.new_data === null ? null : Object.keys(fields.new_data),
@@ -317,6 +320,9 @@ function seedActivity(caseId: string): CaseActivityItem[] {
     id: mockUuid(`a5${index.toString(16)}`),
     audit_seq: index + 1,
     entity_id: null,
+    is_system: false,
+    reason: null,
+    changes: [],
     old_data: null,
     new_data: null,
     ...row,
@@ -336,7 +342,13 @@ function seedComments(caseId: string): CaseCommentItem[] {
       author_role: "leasing_company_user",
       author_display: "Anna Müller",
       body: "The vehicle registration document is missing for CT-1000. Please upload it so we can move this on.",
+      // Written to the leasing company — this one asks them for a document, so it has to be the
+      // audience that can read it.
+      visibility: "external",
       created_at: "2026-08-05T13:30:00Z",
+      edited_at: null,
+      deleted_at: null,
+      is_deleted: false,
     },
   ]
   return commentsByCaseId[caseId]

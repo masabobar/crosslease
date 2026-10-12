@@ -41,6 +41,12 @@ import {
   mockLesseePartners,
   mockPartners,
 } from "@/mocks/fixtures/partners"
+import {
+  CaseActivityResponseSchema,
+  CaseCommentItemSchema,
+  CaseCommentListResponseSchema,
+} from "@/features/cases/api/schema"
+import type { CaseCommentItem } from "@/features/cases/api/schema"
 import { mockUuid } from "@/mocks/uuid"
 import {
   PartnerMatchResponseSchema,
@@ -230,6 +236,32 @@ function buildAssessment(
       }
     }),
   })
+}
+
+// Session-scoped party comments, seeded so the tab opens on a thread rather than on an empty one.
+const partnerCommentsById: Record<string, CaseCommentItem[]> = {}
+
+function partnerComments(partnerId: string): CaseCommentItem[] {
+  if (partnerCommentsById[partnerId] === undefined) {
+    partnerCommentsById[partnerId] = [
+      CaseCommentItemSchema.parse({
+        id: mockUuid("a8c9"),
+        ref_type: "party",
+        ref_id: partnerId,
+        case_id: null,
+        author_id: "00000000-0000-4000-8000-000000000005",
+        author_role: "front_office",
+        author_display: "A. Berger",
+        body: "Leasing company reports a good payment history over three years.",
+        visibility: "internal",
+        created_at: "2026-07-20T14:52:00Z",
+        edited_at: null,
+        deleted_at: null,
+        is_deleted: false,
+      }),
+    ]
+  }
+  return partnerCommentsById[partnerId]
 }
 
 export const businessConfigHandlers = [
@@ -475,6 +507,159 @@ export const businessConfigHandlers = [
         ],
       })
     )
+  ),
+
+  /**
+   * A party's own history — written about the PARTY, so it outlives every case the party appears
+   * on. One entry carries a masked change, because a redacted value has to read as withheld
+   * rather than as an empty field someone cleared.
+   */
+  http.get(`${API}/partners/:partnerId/activity`, () =>
+    envelope(
+      CaseActivityResponseSchema.parse({
+        activity: [
+          {
+            id: mockUuid("a8e1"),
+            audit_seq: 6,
+            entity_type: "partner",
+            entity_id: null,
+            entity_display: null,
+            action_type: "check",
+            event_type: "duplicate_check_run",
+            actor_id: "00000000-0000-4000-8000-000000000001",
+            actor_type: "system",
+            actor_display: "System",
+            actor_role_at_time: null,
+            is_system: true,
+            reason: "No suspect found.",
+            old_data: null,
+            new_data: null,
+            changed_fields: null,
+            changes: [],
+            recorded_at: "2026-08-28T07:14:00Z",
+          },
+          {
+            id: mockUuid("a8e2"),
+            audit_seq: 5,
+            entity_type: "assessment",
+            entity_id: null,
+            entity_display: "Creditreform",
+            action_type: "create",
+            event_type: "assessment_recorded",
+            actor_id: "00000000-0000-4000-8000-000000000003",
+            actor_type: "user",
+            actor_display: "M. Renkl",
+            actor_role_at_time: "back_office",
+            is_system: false,
+            reason: null,
+            old_data: null,
+            new_data: null,
+            changed_fields: null,
+            changes: [],
+            recorded_at: "2026-08-12T08:40:00Z",
+          },
+          {
+            id: mockUuid("a8e3"),
+            audit_seq: 4,
+            entity_type: "partner",
+            entity_id: null,
+            entity_display: null,
+            action_type: "update",
+            event_type: "partner_updated",
+            actor_id: "00000000-0000-4000-8000-000000000005",
+            actor_type: "user",
+            actor_display: "A. Berger",
+            actor_role_at_time: "front_office",
+            is_system: false,
+            reason: "Register extract of 14 Jul 2026.",
+            old_data: null,
+            new_data: null,
+            changed_fields: ["commercial_register_no", "tax_id"],
+            changes: [
+              {
+                field: "commercial_register_no",
+                before: "HRB 214 880",
+                after: "HRB 214 883",
+                masked: false,
+              },
+              {
+                // Redacted on the way out. The screen must say so, not render an empty value.
+                field: "tax_id",
+                before: null,
+                after: null,
+                masked: true,
+              },
+            ],
+            recorded_at: "2026-07-14T10:58:00Z",
+          },
+          {
+            id: mockUuid("a8e4"),
+            audit_seq: 3,
+            entity_type: "bank_account",
+            entity_id: null,
+            entity_display: "DE44 … 49 31",
+            action_type: "close",
+            event_type: "bank_account_closed",
+            actor_id: "00000000-0000-4000-8000-000000000005",
+            actor_type: "user",
+            actor_display: "A. Berger",
+            actor_role_at_time: "front_office",
+            is_system: false,
+            reason: "Closed after the reorganisation.",
+            old_data: null,
+            new_data: null,
+            changed_fields: null,
+            changes: [],
+            recorded_at: "2026-02-03T07:20:00Z",
+          },
+        ],
+        total: 4,
+        page: 1,
+        per_page: 25,
+        total_pages: 1,
+      })
+    )
+  ),
+
+  http.get(`${API}/partners/:partnerId/comments`, ({ params }) =>
+    envelope(
+      CaseCommentListResponseSchema.parse({
+        items: partnerComments(params.partnerId as string),
+        total: partnerComments(params.partnerId as string).length,
+        page: 1,
+        per_page: 25,
+        has_unseen_bank_comment: false,
+      })
+    )
+  ),
+
+  http.post(
+    `${API}/partners/:partnerId/comments`,
+    async ({ params, request }) => {
+      const partnerId = params.partnerId as string
+      const body = (await request.json()) as { body: string }
+      const list = partnerComments(partnerId)
+      const created = CaseCommentItemSchema.parse({
+        id: mockUuid(`a8c${list.length.toString(16)}`),
+        ref_type: "party",
+        ref_id: partnerId,
+        // A party comment belongs to no case — which is why `case_id` became nullable.
+        case_id: null,
+        author_id: "00000000-0000-4000-8000-000000000005",
+        author_role: "front_office",
+        author_display: "A. Berger",
+        body: body.body,
+        // Bank-only: the leasing company has no view of the partner register, so there is no
+        // second audience to choose between.
+        visibility: "internal",
+        created_at: new Date().toISOString(),
+        edited_at: null,
+        deleted_at: null,
+        is_deleted: false,
+      })
+      partnerCommentsById[partnerId] = [created, ...list]
+      return envelope(created, "COMMENT_ADDED")
+    }
   ),
 
   http.get(`${API}/partners/:partnerId/relationships`, ({ params }) =>

@@ -655,9 +655,27 @@ export const CaseActivityItemSchema = z.object({
   actor_type: z.string(),
   actor_display: z.string().nullable(),
   actor_role_at_time: z.string().nullable(),
+  // Written by the platform rather than by a person — a duplicate check, a scheduled expiry.
+  // Defaulted because the field arrived after this schema did and older fixtures predate it.
+  is_system: z.boolean().default(false),
+  reason: z.string().nullable().default(null),
   old_data: z.record(z.string(), z.unknown()).nullable(),
   new_data: z.record(z.string(), z.unknown()).nullable(),
   changed_fields: z.array(z.string()).nullable(),
+  // The before/after pairs, already resolved by the backend. `masked` marks a value that was
+  // redacted on the way out — it must be shown as withheld, never rendered as if it were the
+  // value, because a redacted field reading as empty is indistinguishable from one that was
+  // cleared.
+  changes: z
+    .array(
+      z.object({
+        field: z.string(),
+        before: z.string().nullable(),
+        after: z.string().nullable(),
+        masked: z.boolean(),
+      })
+    )
+    .default([]),
   recorded_at: z.string(),
 })
 export type CaseActivityItem = z.infer<typeof CaseActivityItemSchema>
@@ -675,14 +693,28 @@ export type CaseActivityResponse = z.infer<typeof CaseActivityResponseSchema>
 // `actor_role_at_time` — a comment keeps the authority its author had when writing it.
 export const CaseCommentItemSchema = z.object({
   id: z.string().uuid(),
-  case_id: z.string().uuid(),
+  // The thread this comment hangs on. A comment is no longer always a case's: the same shape now
+  // serves a financing, a party and a contract, which is why `case_id` became nullable — a party
+  // comment belongs to no case at all.
+  ref_type: z.enum(["case", "financing", "party", "contract"]).optional(),
+  ref_id: z.string().optional(),
+  case_id: z.string().uuid().nullable(),
   author_id: z.string(),
   author_role: z.string(),
   // The author's name, resolved by the backend. Nullable because a comment can outlive the
   // account that wrote it — the role beside it is what stays true either way.
   author_display: z.string().nullable(),
   body: z.string(),
+  // Who the comment is for. `internal` is the default and the leasing company never receives one,
+  // enforced server-side rather than hidden by the interface. Defaulted here because rows written
+  // before the field existed predate the distinction.
+  visibility: z.enum(["internal", "external"]).default("internal"),
   created_at: z.string(),
+  edited_at: z.string().nullable().default(null),
+  deleted_at: z.string().nullable().default(null),
+  // Deleted, not removed: a comment that informed a decision stays in the record and is filtered
+  // out of the view rather than erased from it.
+  is_deleted: z.boolean().default(false),
 })
 export type CaseCommentItem = z.infer<typeof CaseCommentItemSchema>
 
