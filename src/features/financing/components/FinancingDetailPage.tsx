@@ -1,6 +1,5 @@
 import { useState } from "react"
-import { useParams } from "react-router-dom"
-import { Link } from "react-router-dom"
+import { Link, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 import { Banknote, Box, FileSignature } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
@@ -14,57 +13,70 @@ import {
   frameworkAgreementDetail,
   partnerDetail,
 } from "@/router/paths"
-import { useCase } from "@/features/cases/hooks/useCase"
-import { usePartnerDetail } from "@/features/partners/hooks/usePartnerDetail"
-import { useCaseProductTemplate } from "@/features/cases/hooks/useCaseProductTemplate"
 import { CaseActivityPanel } from "@/features/cases/components/CaseActivityPanel"
 import { CaseDocumentRequirementsPanel } from "@/features/documentRequirements/components/CaseDocumentRequirementsPanel"
-import { useFinancingOverview } from "@/features/financing/hooks/useFinancingOverview"
+import { useCase } from "@/features/cases/hooks/useCase"
+import { useFinancingDetail } from "@/features/financing/hooks/useFinancingDetail"
+import { FinancingDataTab } from "@/features/financing/components/FinancingDataTab"
+import { FinancingCollateralsTab } from "@/features/financing/components/FinancingCollateralsTab"
 import { FinancingContractsPanel } from "@/features/financing/components/FinancingContractsPanel"
-import { FinancingDataPanel } from "@/features/financing/components/FinancingDataPanel"
+import { ApprovalConditionsPanel } from "@/features/financing/components/ApprovalConditionsPanel"
+import type { FinancingTabCounts } from "@/features/financing/api/financingDetailSchema"
 
-const TAB_KEYS = ["data", "contracts", "documents", "activity"] as const
+const TAB_KEYS = [
+  "data",
+  "contracts",
+  "collaterals",
+  "covenants",
+  "documents",
+  "activity",
+] as const
 type TabKey = (typeof TAB_KEYS)[number]
+
+// Which tabs carry a count, and where the count comes from. A tab the record does not count —
+// Data, Documents, Activity — shows its name alone rather than a fabricated number.
+const COUNT_OF: Partial<Record<TabKey, keyof FinancingTabCounts>> = {
+  contracts: "contracts",
+  collaterals: "collaterals",
+  covenants: "covenants",
+}
 
 /**
  * The financing workspace.
  *
- * ── WHY THE ROUTE IS KEYED ON THE CASE ─────────────────────────────────────────────────────────
- * There is no `GET /financings/{id}`. Every endpoint this screen reads — the overview, the
- * remaining balance, the per-contract split, the conditions, the activity — hangs off
- * `/cases/{case_id}/financing/…`, so the case id is not a detail about the financing, it is the
- * financing's address. The list row carries it, and the URL says so rather than pretending to an
- * id the API cannot resolve.
+ * ── THE ROUTE IS KEYED ON THE FINANCING ────────────────────────────────────────────────────────
+ * `GET /financings/{id}` landed on 12 Oct. Until then every financing figure hung off
+ * `/cases/{case_id}/financing/…`, so this screen had to be addressed by its case; it is now
+ * addressed by the financing, as the prototype has it, and the case is a link out rather than the
+ * identity of the page.
  *
- * The header still leads with the financing's own reference, because that is what the reader
- * clicked on and what they are looking at.
+ * The detail arrives denormalised — case reference, leasing company, framework agreement and
+ * product template all come with it — so the header resolves no names of its own.
  *
- * ── WHAT THE PROTOTYPE'S DATA TAB HAS THAT THIS DOES NOT ───────────────────────────────────────
- * Its repayment schedule table (value date / payment / principal / interest / closing balance) and
- * the Sollbelastung–Habenbelastung pair. Neither is on the financing overview or the remaining
- * balance; the instalment plan the API does expose is per contract, not per financing. They are
- * left out rather than computed here — an amortisation table the UI derives is a second answer
- * that can disagree with the bank's.
+ * ── TWO TABS STILL READ THE CASE ───────────────────────────────────────────────────────────────
+ * Documents and Activity. `/financings/{id}/document-rows`, `/financings/{id}/activity` and
+ * `/financings/{id}/comments` all exist now, but the panels that render them are written against
+ * the case surfaces; pointing them at the financing is a change to those components, not to this
+ * one, and is left as its own piece of work rather than half-done here.
+ *
+ * ── REDEMPTIONS HAS NO TAB ─────────────────────────────────────────────────────────────────────
+ * `counts.redemptions` arrives with the record, but no route returns the redemptions themselves.
+ * A tab whose only content is its own count is worse than no tab, so it is left out until the
+ * list endpoint ships.
  */
 export default function FinancingDetailPage() {
   const { t } = useTranslation("financing")
-  const { caseId: caseIdParam } = useParams<{ caseId: string }>()
-  const caseId = isUuidRouteParam(caseIdParam) ? caseIdParam : undefined
+  const { financingId: idParam } = useParams<{ financingId: string }>()
+  const financingId = isUuidRouteParam(idParam) ? idParam : undefined
   const [activeTab, setActiveTab] = useState<TabKey>("data")
 
-  const overview = useFinancingOverview(caseId)
-  const caseRecord = useCase(caseId)
-  // `CaseResponse` carries the LC's id but not its name — that denormalisation is on the LIST
-  // item — so the name comes from the registry, the same way every other LC link in the app
-  // resolves it.
-  const lcPartner = usePartnerDetail(overview.data?.lc_partner_id ?? null)
-  const productTemplate = useCaseProductTemplate(caseId)
+  const detail = useFinancingDetail(financingId)
+  // Only the two case-scoped panels need it, and only for the case type they render against.
+  const caseRecord = useCase(detail.data?.case_id)
 
-  // A param that is not a UUID can never name a case — render not-found rather than firing a
-  // request the backend would reject.
-  if (caseId === undefined) return <NotFoundPage />
+  if (financingId === undefined) return <NotFoundPage />
 
-  if (overview.isLoading) {
+  if (detail.isLoading) {
     return (
       <div
         className="p-8 flex flex-col gap-4"
@@ -77,20 +89,20 @@ export default function FinancingDetailPage() {
     )
   }
 
-  if (overview.isError || !overview.data) {
+  if (detail.isError || !detail.data) {
     return (
       <div className="p-8">
         <p
           className="text-sm text-destructive"
           data-testid="financing-detail-error"
         >
-          {resolveApiErrorMessage(overview.error, t)}
+          {resolveApiErrorMessage(detail.error, t)}
         </p>
       </div>
     )
   }
 
-  const financing = overview.data
+  const financing = detail.data
 
   return (
     <div
@@ -105,16 +117,14 @@ export default function FinancingDetailPage() {
           <Badge variant="secondary" className="font-normal">
             {t(`kinds.${financing.kind}` as "kinds.single")}
           </Badge>
-          {/* The case is named rather than hidden: it is where the financing came from and, for
-              every action, where it is still worked. */}
           <span className="text-sm text-muted-foreground">
             {t("detail.caseId")}{" "}
             <Link
               className="font-medium text-primary hover:underline"
-              to={caseDetail(caseId)}
+              to={caseDetail(financing.case_id)}
               data-testid="financing-detail-case-link"
             >
-              {caseRecord.data?.case_reference ?? "—"}
+              {financing.case_reference}
             </Link>
           </span>
           <Badge variant="outline" className="font-normal">
@@ -122,6 +132,21 @@ export default function FinancingDetailPage() {
               defaultValue: financing.status,
             })}
           </Badge>
+          {/* A financing that has ended says why. "Ran its term" and "redeemed early" are
+              different facts, and only the second one explains a balance that went to zero
+              ahead of the plan. */}
+          {financing.ended_reason !== null &&
+            financing.ended_reason !== undefined && (
+              <Badge
+                variant="secondary"
+                className="font-normal"
+                data-testid="financing-ended-reason"
+              >
+                {t(
+                  `detail.endedReasons.${financing.ended_reason}` as "detail.endedReasons.terminated"
+                )}
+              </Badge>
+            )}
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
@@ -135,7 +160,7 @@ export default function FinancingDetailPage() {
                 className="font-medium text-primary hover:underline"
                 to={partnerDetail(financing.lc_partner_id)}
               >
-                {lcPartner.data?.display_name ?? financing.lc_partner_id}
+                {financing.lc_partner_name ?? financing.lc_partner_id}
               </Link>
             ) : (
               <span className="font-medium">—</span>
@@ -147,15 +172,8 @@ export default function FinancingDetailPage() {
             <span className="text-muted-foreground">
               {t("detail.productTemplate")}
             </span>
-            {/* The overview carries the template's id, not its name — the case's own binding is
-                where the name lives, so a raw UUID never reaches the header. */}
-            {/* The overview carries the template's id, not its name — the case's own binding is
-                where the name lives, so a raw UUID never reaches the header. A case that has not
-                bound one yet reads as a dash rather than as a permanent ellipsis. */}
             <span className="font-medium">
-              {productTemplate.isLoading
-                ? "…"
-                : (productTemplate.data?.template_name ?? "—")}
+              {financing.product_template_name ?? "—"}
             </span>
           </span>
 
@@ -171,7 +189,8 @@ export default function FinancingDetailPage() {
                 className="font-medium text-primary hover:underline"
                 to={frameworkAgreementDetail(financing.framework_agreement_id)}
               >
-                {t("detail.openAgreement")}
+                {financing.framework_agreement_name ??
+                  t("detail.openAgreement")}
               </Link>
             )}
           </span>
@@ -179,31 +198,48 @@ export default function FinancingDetailPage() {
       </header>
 
       <UnderlineTabBar
-        tabs={TAB_KEYS.map(key => ({
-          key,
-          label: t(`detail.tabs.${key}` as "detail.tabs.data"),
-          testId: `financing-tab-${key}`,
-        }))}
+        tabs={TAB_KEYS.map(key => {
+          const countKey = COUNT_OF[key]
+          const label = t(`detail.tabs.${key}` as "detail.tabs.data")
+          return {
+            key,
+            // The counts come with the record, so the tab bar labels itself without four extra
+            // requests — and a count can never disagree with the tab it sits on.
+            label:
+              countKey === undefined
+                ? label
+                : `${label} ${financing.counts[countKey]}`,
+            testId: `financing-tab-${key}`,
+          }
+        })}
         activeTab={activeTab}
         onChange={setActiveTab}
       />
 
-      {/* The balance banner, the repayment card and the pricing card are all this panel, built
-          against the same endpoints. Drawing a second banner above it showed the same two figures
-          twice — and the panel is the one that also carries the "figures still calculating"
-          notice, which is the thing a reader must not miss. */}
-      {activeTab === "data" && <FinancingDataPanel caseId={caseId} />}
+      {activeTab === "data" && <FinancingDataTab financing={financing} />}
 
-      {activeTab === "contracts" && <FinancingContractsPanel caseId={caseId} />}
+      {activeTab === "contracts" && (
+        <FinancingContractsPanel caseId={financing.case_id} />
+      )}
+
+      {activeTab === "collaterals" && (
+        <FinancingCollateralsTab financingId={financing.id} />
+      )}
+
+      {activeTab === "covenants" && (
+        <ApprovalConditionsPanel caseId={financing.case_id} />
+      )}
 
       {activeTab === "documents" && (
         <CaseDocumentRequirementsPanel
-          businessObjectId={caseId}
+          businessObjectId={financing.case_id}
           caseType={caseRecord.data?.case_type}
         />
       )}
 
-      {activeTab === "activity" && <CaseActivityPanel caseId={caseId} />}
+      {activeTab === "activity" && (
+        <CaseActivityPanel caseId={financing.case_id} />
+      )}
     </div>
   )
 }

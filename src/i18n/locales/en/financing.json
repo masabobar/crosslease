@@ -277,9 +277,101 @@
     "tabs": {
       "data": "Data",
       "contracts": "Contracts",
+      "collaterals": "Collaterals",
+      "covenants": "Covenants",
       "documents": "Documents",
       "activity": "Activity"
     },
-    "openAgreement": "Open agreement"
+    "openAgreement": "Open agreement",
+    "notRecorded": "not recorded",
+    "valueDate": "value date {{date}}",
+    "repayment": "Repayment",
+    "pricing": "Pricing",
+    "instalment": "Instalment",
+    "instalmentNo": "Instalment",
+    "instalmentOf": "{{due}} of {{total}}",
+    "repaymentStarts": "Repayment starts",
+    "finalInstalment": "Final instalment",
+    "residual": "Financing residual value",
+    "maturity": "Final maturity",
+    "refinancingRate": "Refinancing rate",
+    "rateQuotedOn": "Rate quoted on",
+    "lockPeriod": "Lock period",
+    "lockDays": "{{count}} days",
+    "effectiveQuota": "Refinancing ratio",
+    "agreedLoanAmount": "Agreed loan amount",
+    "totalInterest": "Interest over the term",
+    "schedule": "Repayment schedule",
+    "scheduleHint": "The highlighted row is today's position and matches the outstanding balance above.",
+    "scheduleAdjusted": "A redemption has rewritten part of this plan — it is no longer the schedule originally agreed.",
+    "schedCols": {
+      "valueDate": "Value date",
+      "payment": "Payment",
+      "principal": "Principal",
+      "interest": "Interest",
+      "closingBalance": "Closing balance"
+    },
+    "schedKinds": {
+      "payout": "payout",
+      "redemption": "redemption"
+    },
+    "endedReasons": {
+      "term_ran_out": "Term ran out",
+      "terminated": "Terminated",
+      "redeemed_early": "Redeemed early"
+    },
+    "maintained": {
+      "heading": "Maintained by hand",
+      "soll": "Sollbelastung",
+      "haben": "Habenausgleich",
+      "date": "Date",
+      "amount": "Amount",
+      "edit": "Edit",
+      "save": "Save changes",
+      "cancel": "Cancel",
+      "saved": "Saved.",
+      "note": "Nothing here is computed, and nothing here gates a status. An empty value means not recorded — which is not the same as zero."
+    },
+    "loanAccount": "Loan account"
+  },
+  "collateral": {
+    "heading": "Collateral total",
+    "oneFigure": "One figure for the whole financing — there is none per object.",
+    "versions": "{{count}} recorded values",
+    "proposed": "Re-determination proposed: {{amount}}",
+    "proposedBy": "by {{who}} — waiting for a second Back Office person",
+    "recheck": {
+      "title": "Recheck the collateral total",
+      "description": "Set by what changed the collateral's worth. Only a re-determination confirmed under four eyes clears it."
+    },
+    "blocks": {
+      "not_back_office": "A second Back Office person confirms this.",
+      "proposer": "The proposer cannot confirm their own re-determination.",
+      "step_35_resolver": "Whoever captured the collateral cannot confirm the total."
+    },
+    "states": {
+      "clear": "Clear",
+      "needs_recheck": "Needs recheck"
+    },
+    "securities": "Securities",
+    "inPlace": "{{done}} of {{total}} with proof",
+    "noParty": "no party",
+    "proofMissing": "proof missing",
+    "capturedWithContract": "Captured with the contract. A security is held against a contract, never against the loan.",
+    "types": {
+      "guarantee": "Guarantee",
+      "chattel_mortgage": "Chattel mortgage",
+      "assignment_of_receivables": "Assignment of receivables",
+      "deposit": "Deposit"
+    },
+    "cols": {
+      "security": "Security",
+      "contract": "Contract",
+      "value": "Value"
+    },
+    "empty": {
+      "title": "No security recorded",
+      "description": "Nothing is held against the contracts of this financing."
+    }
   }
 }

@@ -277,9 +277,101 @@
     "tabs": {
       "data": "Daten",
       "contracts": "Verträge",
+      "collaterals": "Sicherheiten",
+      "covenants": "Auflagen",
       "documents": "Dokumente",
       "activity": "Aktivität"
     },
-    "openAgreement": "Rahmenvertrag öffnen"
+    "openAgreement": "Rahmenvertrag öffnen",
+    "notRecorded": "nicht erfasst",
+    "valueDate": "Valuta {{date}}",
+    "repayment": "Tilgung",
+    "pricing": "Konditionen",
+    "instalment": "Rate",
+    "instalmentNo": "Rate",
+    "instalmentOf": "{{due}} von {{total}}",
+    "repaymentStarts": "Tilgungsbeginn",
+    "finalInstalment": "Schlussrate",
+    "residual": "Restwert der Finanzierung",
+    "maturity": "Endfälligkeit",
+    "refinancingRate": "Refinanzierungszins",
+    "rateQuotedOn": "Zins gestellt am",
+    "lockPeriod": "Bindungsfrist",
+    "lockDays": "{{count}} Tage",
+    "effectiveQuota": "Refinanzierungsquote",
+    "agreedLoanAmount": "Vereinbarter Darlehensbetrag",
+    "totalInterest": "Zinsen über die Laufzeit",
+    "schedule": "Tilgungsplan",
+    "scheduleHint": "Die hervorgehobene Zeile ist die heutige Position und entspricht dem offenen Saldo oben.",
+    "scheduleAdjusted": "Eine Rückzahlung hat einen Teil dieses Plans neu geschrieben — er ist nicht mehr der ursprünglich vereinbarte.",
+    "schedCols": {
+      "valueDate": "Valutadatum",
+      "payment": "Zahlung",
+      "principal": "Tilgung",
+      "interest": "Zinsen",
+      "closingBalance": "Restsaldo"
+    },
+    "schedKinds": {
+      "payout": "Auszahlung",
+      "redemption": "Rückzahlung"
+    },
+    "endedReasons": {
+      "term_ran_out": "Laufzeit abgelaufen",
+      "terminated": "Gekündigt",
+      "redeemed_early": "Vorzeitig abgelöst"
+    },
+    "maintained": {
+      "heading": "Manuell gepflegt",
+      "soll": "Sollbelastung",
+      "haben": "Habenausgleich",
+      "date": "Datum",
+      "amount": "Betrag",
+      "edit": "Bearbeiten",
+      "save": "Änderungen speichern",
+      "cancel": "Abbrechen",
+      "saved": "Gespeichert.",
+      "note": "Hier wird nichts berechnet und nichts steuert einen Status. Ein leerer Wert bedeutet nicht erfasst — das ist nicht dasselbe wie null."
+    },
+    "loanAccount": "Darlehenskonto"
+  },
+  "collateral": {
+    "heading": "Sicherheitenwert",
+    "oneFigure": "Eine Zahl für die gesamte Finanzierung — nicht je Objekt.",
+    "versions": "{{count}} erfasste Werte",
+    "proposed": "Neubewertung vorgeschlagen: {{amount}}",
+    "proposedBy": "von {{who}} — wartet auf eine zweite Person aus dem Back Office",
+    "recheck": {
+      "title": "Sicherheitenwert erneut prüfen",
+      "description": "Ausgelöst durch eine Änderung am Sicherheitenwert. Nur eine im Vier-Augen-Prinzip bestätigte Neubewertung hebt sie auf."
+    },
+    "blocks": {
+      "not_back_office": "Eine zweite Person aus dem Back Office bestätigt dies.",
+      "proposer": "Wer die Neubewertung vorschlägt, kann sie nicht selbst bestätigen.",
+      "step_35_resolver": "Wer die Sicherheit erfasst hat, kann den Wert nicht bestätigen."
+    },
+    "states": {
+      "clear": "In Ordnung",
+      "needs_recheck": "Prüfung nötig"
+    },
+    "securities": "Sicherheiten",
+    "inPlace": "{{done}} von {{total}} mit Nachweis",
+    "noParty": "keine Partei",
+    "proofMissing": "Nachweis fehlt",
+    "capturedWithContract": "Mit dem Vertrag erfasst. Eine Sicherheit wird gegen einen Vertrag gestellt, nie gegen das Darlehen.",
+    "types": {
+      "guarantee": "Bürgschaft",
+      "chattel_mortgage": "Sicherungsübereignung",
+      "assignment_of_receivables": "Forderungsabtretung",
+      "deposit": "Kaution"
+    },
+    "cols": {
+      "security": "Sicherheit",
+      "contract": "Vertrag",
+      "value": "Wert"
+    },
+    "empty": {
+      "title": "Keine Sicherheit erfasst",
+      "description": "Zu den Verträgen dieser Finanzierung ist nichts hinterlegt."
+    }
   }
 }

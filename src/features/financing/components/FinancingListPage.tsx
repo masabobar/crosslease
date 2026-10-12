@@ -36,18 +36,14 @@ const SEARCH_DEBOUNCE_MS = 300
 /**
  * **Financings** — the list.
  *
- * ── WHY THIS IS A LIST AND NOT A LIST PLUS A DETAIL ────────────────────────────────────────────
- * `GET /financings` is the only financing route that is not case-scoped. There is no
- * `GET /financings/{id}`: every other financing endpoint hangs off `/cases/{case_id}/financing/…`,
- * so the case is not a link from the financing — it is the only address the financing has. A row
- * therefore opens the case workspace, where the balance, the pricing, the contracts and the
- * approval conditions already live on their own tabs.
+ * A row opens the financing's own workspace. That became possible on 12 Oct, when
+ * `GET /financings/{id}` landed; before it, the only address a financing had was its case.
  *
  * ── WHAT THE PROTOTYPE SHOWS THAT THIS DOES NOT ────────────────────────────────────────────────
  * Its table also carries **Payout amount**, **Sollbelastung** and **Habenbelastung**, and an
- * **Outstanding** toggle derived from the last two — none of which are on `FinancingListItem`.
- * Per `api-first.md` §4 they are left out rather than drawn from invented data; the outstanding
- * balance is on the case's own financing overview, which is one click away.
+ * **Outstanding** toggle derived from the last two. Those four are on the financing DETAIL, not on
+ * `FinancingListItem`, so putting them in this table would mean a request per row. They are left
+ * out rather than drawn from invented data, and they are one click away.
  */
 export default function FinancingListPage() {
   const { t } = useTranslation("financing")
@@ -200,11 +196,11 @@ export default function FinancingListPage() {
                   tabIndex={0}
                   className="cursor-pointer"
                   data-testid={`financing-row-${row.id}`}
-                  onClick={() => navigate(financingDetail(row.case_id))}
+                  onClick={() => navigate(financingDetail(row.id))}
                   onKeyDown={event => {
                     if (event.key === "Enter" || event.key === " ") {
                       event.preventDefault()
-                      navigate(financingDetail(row.case_id))
+                      navigate(financingDetail(row.id))
                     }
                   }}
                 >

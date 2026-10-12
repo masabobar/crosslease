@@ -201,10 +201,13 @@ const CaseListItem = z
     created_at: z.string().datetime({ offset: true }),
     contract_count: z.number().int().optional().default(0),
     lessee_count: z.number().int().optional().default(0),
+    lessee_name: z.union([z.string(), z.null()]).optional(),
     lc_partner_name: z.union([z.string(), z.null()]).optional(),
+    initiated_by_role: z.union([UserRole, z.null()]).optional(),
     waiting_on_roles: z.union([z.array(z.string()), z.null()]).optional(),
     phase: z.union([z.string(), z.null()]).optional(),
     step_order: z.union([z.number(), z.null()]).optional(),
+    step_total: z.number().int().optional().default(0),
     rate_due_date: z.union([z.string(), z.null()]).optional(),
     last_activity_at: z.union([z.string(), z.null()]).optional(),
     last_activity_by_name: z.union([z.string(), z.null()]).optional(),
@@ -219,19 +222,36 @@ const DashboardResponse = z
     portal_cases: z.array(CaseListItem),
   })
   .passthrough()
-const FollowUpEvent = z.enum([
-  "redemption",
-  "lessee_change",
-  "object_swap",
-  "extension",
-  "asset_event",
-])
-const StartFollowUpRequest = z
+const CaseLeasingCompanyOption = z
   .object({
-    event: FollowUpEvent,
-    affected_contract_ids: z.array(z.string().uuid()).optional(),
+    id: z.string().uuid(),
+    name: z.string(),
+    city: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
+const CaseLeasingCompaniesResponse = z
+  .object({ items: z.array(CaseLeasingCompanyOption) })
+  .passthrough()
+const LeasingCompanyResolutionResponse = z
+  .object({
+    lc_partner_id: z.string().uuid(),
+    agreement_id: z.union([z.string(), z.null()]),
+    agreement_name: z.union([z.string(), z.null()]),
+    currency: z.union([z.string(), z.null()]),
+    vfe_amount_eur: z.union([z.string(), z.null()]),
+    payout_account_iban: z.union([z.string(), z.null()]),
+    collection_account_iban: z.union([z.string(), z.null()]),
+    bank_side_visible: z.boolean(),
+    refinancing_quota: z.union([z.string(), z.null()]),
+    framework_volume_eur: z.union([z.string(), z.null()]),
+    product_template_id: z.union([z.string(), z.null()]),
+    template_name: z.union([z.string(), z.null()]),
+    template_version: z.union([z.string(), z.null()]),
+    has_usable_template: z.boolean(),
+    lc_numbers: z.array(z.string()),
+  })
+  .passthrough()
+const StartCaseRequest = z.object({ case_type: CaseType }).passthrough()
 const CaseResponse = z
   .object({
     id: z.string().uuid(),
@@ -252,12 +272,10 @@ const CaseResponse = z
     created_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
-const StartCaseRequest = z.object({ case_type: CaseType }).passthrough()
 const case_type = z.union([CaseType, z.null()]).optional()
 const status = z.union([CaseDisplayStatus, z.null()]).optional()
 const assignee_id = z.union([z.string(), z.null()]).optional()
 const waiting_on_role = z.union([UserRole, z.null()]).optional()
-const origin = z.union([CaseOrigin, z.null()]).optional()
 const CaseListResponse = z
   .object({
     items: z.array(CaseListItem),
@@ -321,39 +339,6 @@ const ReviewContractItem = z
     missing_fields: z.array(z.string()),
   })
   .passthrough()
-const CollateralType = z.enum([
-  "chattel_mortgage",
-  "assignment_of_receivables",
-  "guarantee",
-])
-const CollateralRecheckState = z.enum([
-  "clear",
-  "needs_recheck",
-  "redetermined",
-])
-const CollateralValueItem = z
-  .object({
-    total_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-    set_by: z.string().uuid(),
-    set_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
-const app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse =
-  z
-    .object({
-      id: z.string().uuid(),
-      case_id: z.string().uuid(),
-      collateral_type: z.union([CollateralType, z.null()]),
-      current_total_eur: z.union([z.string(), z.null()]),
-      evidence_document_id: z.union([z.string(), z.null()]),
-      recheck_state: CollateralRecheckState,
-      redetermined_by: z.union([z.string(), z.null()]),
-      redetermined_at: z.union([z.string(), z.null()]),
-      confirmed_by: z.union([z.string(), z.null()]),
-      confirmed_at: z.union([z.string(), z.null()]),
-      value_history: z.array(CollateralValueItem),
-    })
-    .passthrough()
 const ReviewFinancingSummary = z
   .object({
     refinancing_rate: z.union([z.string(), z.null()]),
@@ -376,10 +361,6 @@ const CaseReviewResponse = z
     earliest_contract_start: z.union([z.string(), z.null()]),
     latest_contract_start: z.union([z.string(), z.null()]),
     average_term_months: z.union([z.number(), z.null()]),
-    collateral: z.union([
-      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
-      z.null(),
-    ]),
     financing: z.union([ReviewFinancingSummary, z.null()]),
   })
   .passthrough()
@@ -403,10 +384,6 @@ const CaseDataResponse = z
     contract_count: z.number().int(),
     residual_sum: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     financing: z.union([CaseDataFinancingBlock, z.null()]),
-    collateral: z.union([
-      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
-      z.null(),
-    ]),
     absent_blocks: z.array(z.string()),
   })
   .passthrough()
@@ -436,58 +413,27 @@ const DeviationListResponse = z
     deviations: z.array(DeviationResponse),
   })
   .passthrough()
-const DocumentToSendItem = z
-  .object({
-    document_type_code: z.string(),
-    media_id: z.string().uuid(),
-    file_name: z.string(),
-  })
+const CancelCaseRequest = z
+  .object({ reason: z.string().min(1).max(255) })
   .passthrough()
-const DocumentsToSendResponse = z
-  .object({
-    case_id: z.string().uuid(),
-    documents: z.array(DocumentToSendItem),
-  })
-  .passthrough()
-const DispatchResponse = z
-  .object({
-    case_id: z.string().uuid(),
-    dispatch_confirmed: z.boolean(),
-    confirmed_by: z.union([z.string(), z.null()]),
-    confirmed_at: z.union([z.string(), z.null()]),
-  })
-  .passthrough()
-const CorrespondenceKind = z.enum([
-  "loan_offer_sent",
-  "amortisation_schedule_sent",
-  "general",
+const GovernedActionStatus = z.enum([
+  "pending",
+  "approved",
+  "rejected",
+  "withdrawn",
+  "expired",
 ])
-const RecordCorrespondenceRequest = z
+const PendingApprovalResponse = z
   .object({
-    kind: CorrespondenceKind,
-    included_document_type_codes: z.array(z.string()).optional(),
-    note: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const CorrespondenceResponse = z
-  .object({
-    id: z.string().uuid(),
-    case_id: z.string().uuid(),
-    kind: CorrespondenceKind,
-    included_document_type_codes: z.array(z.string()),
-    note: z.union([z.string(), z.null()]),
-    recorded_by: z.string().uuid(),
-    recorded_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
-const CorrespondenceListResponse = z
-  .object({
-    case_id: z.string().uuid(),
-    correspondence: z.array(CorrespondenceResponse),
+    governed_action_id: z.string().uuid(),
+    status: GovernedActionStatus,
   })
   .passthrough()
 const BindLeasingCompanyRequest = z
-  .object({ lc_number: z.string().regex(/^[0-9]{4}$/) })
+  .object({
+    lc_number: z.string().regex(/^[0-9]{4}$/),
+    lc_partner_id: z.union([z.string(), z.null()]).optional(),
+  })
   .passthrough()
 const BindProductTemplateRequest = z
   .object({ product_template_id: z.string().uuid() })
@@ -515,6 +461,14 @@ const CaseDetailResponse = z
     waiting_on_roles: z.union([z.array(z.string()), z.null()]).optional(),
   })
   .passthrough()
+const CaseActivityChange = z
+  .object({
+    field: z.string(),
+    before: z.union([z.string(), z.null()]),
+    after: z.union([z.string(), z.null()]),
+    masked: z.boolean(),
+  })
+  .passthrough()
 const CaseActivityItem = z
   .object({
     id: z.string().uuid(),
@@ -528,9 +482,12 @@ const CaseActivityItem = z
     actor_type: z.string(),
     actor_display: z.union([z.string(), z.null()]),
     actor_role_at_time: z.union([z.string(), z.null()]),
+    is_system: z.boolean(),
+    reason: z.union([z.string(), z.null()]),
     old_data: z.union([z.object({}).partial().passthrough(), z.null()]),
     new_data: z.union([z.object({}).partial().passthrough(), z.null()]),
     changed_fields: z.union([z.array(z.string()), z.null()]),
+    changes: z.array(CaseActivityChange),
     recorded_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
@@ -542,16 +499,6 @@ const CaseActivityResponse = z
     per_page: z.number().int(),
     total_pages: z.number().int(),
   })
-  .passthrough()
-const SetCollateralTypeRequest = z
-  .object({ collateral_type: CollateralType })
-  .passthrough()
-const SetCollateralTotalRequest = z
-  .object({ total_eur: z.union([z.number(), z.string()]) })
-  .passthrough()
-const SetCollateralEvidenceRequest = z
-  .object({ evidence_document_id: z.union([z.string(), z.null()]) })
-  .partial()
   .passthrough()
 const RedemptionStatus = z.enum(["pending", "settled"])
 const RedemptionListItem = z
@@ -590,26 +537,37 @@ const RedemptionResponse = z
     captured_at: z.union([z.string(), z.null()]),
   })
   .passthrough()
-const RedetermineCollateralRequest = z
-  .object({ total_eur: z.union([z.number(), z.string()]) })
-  .passthrough()
-const CombinedDocumentResponse = z
+const CaseDuplicateFlagParty = z
   .object({
-    id: z.string().uuid(),
-    case_id: z.string().uuid(),
-    media_id: z.string().uuid(),
-    file_name: z.string(),
-    is_current: z.boolean(),
-    build_kind: z.string(),
-    document_count: z.number().int(),
-    built_by: z.string().uuid(),
-    built_at: z.string().datetime({ offset: true }),
+    partner_id: z.string().uuid(),
+    display_name: z.string(),
+    partner_status: z.string(),
+    roles: z.array(z.string()),
   })
   .passthrough()
-const CombinedDocumentListResponse = z
+const CaseDuplicateFlag = z
   .object({
-    case_id: z.string().uuid(),
-    builds: z.array(CombinedDocumentResponse),
+    pair_id: z.string().uuid(),
+    status: z.string(),
+    confidence: z.string(),
+    matching_evidence: z.array(z.unknown()),
+    parties: z.array(CaseDuplicateFlagParty),
+  })
+  .passthrough()
+const CaseDuplicateFlagsResponse = z
+  .object({ case_id: z.string().uuid(), flags: z.array(CaseDuplicateFlag) })
+  .passthrough()
+const KeepBothRequest = z
+  .object({ note: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough()
+const DuplicateResolutionResponse = z
+  .object({ pair_id: z.string().uuid(), status: z.string() })
+  .passthrough()
+const MergeDuplicateRequest = z
+  .object({
+    survivor_partner_id: z.string().uuid(),
+    note: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const PartyMatchItem = z
@@ -625,17 +583,16 @@ const PartyMatchItem = z
   })
   .passthrough()
 const CasePartyMatchResponse = z
-  .object({
-    case_id: z.string().uuid(),
-    submission_blocked: z.boolean(),
-    parties: z.array(PartyMatchItem),
-  })
+  .object({ case_id: z.string().uuid(), parties: z.array(PartyMatchItem) })
   .passthrough()
+const CommentRefType = z.enum(["case", "financing", "party", "contract"])
 const CommentVisibility = z.enum(["internal", "external"])
 const CaseCommentItem = z
   .object({
     id: z.string().uuid(),
-    case_id: z.string().uuid(),
+    ref_type: CommentRefType,
+    ref_id: z.string().uuid(),
+    case_id: z.union([z.string(), z.null()]).optional(),
     author_id: z.string().uuid(),
     author_role: z.string(),
     author_display: z.union([z.string(), z.null()]).optional(),
@@ -653,6 +610,7 @@ const CaseCommentListResponse = z
     total: z.number().int(),
     page: z.number().int(),
     per_page: z.number().int(),
+    has_unseen_bank_comment: z.boolean().optional().default(false),
   })
   .passthrough()
 const AddCaseCommentRequest = z
@@ -664,6 +622,7 @@ const AddCaseCommentRequest = z
 const EditCaseCommentRequest = z
   .object({ body: z.string().min(1).max(2000) })
   .passthrough()
+const status__2 = z.union([RequestStatus, z.null()]).optional()
 const LcCaseListItem = z
   .object({
     id: z.string().uuid(),
@@ -672,11 +631,13 @@ const LcCaseListItem = z
     case_status: CaseStatus,
     display_status: CaseDisplayStatus,
     primary_entity: CasePrimaryEntity,
-    financing_status: z.union([FinancingStatus, z.null()]).optional(),
     agreement_reference: z.union([z.string(), z.null()]).optional(),
     contract_count: z.number().int().optional().default(0),
     origin: CaseOrigin,
     created_at: z.string().datetime({ offset: true }),
+    lessee_name: z.union([z.string(), z.null()]).optional(),
+    lessee_count: z.number().int().optional().default(0),
+    submitted_at: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const LcCaseListResponse = z
@@ -689,41 +650,68 @@ const LcCaseDetailResponse = z
     case_type: CaseType,
     case_status: CaseStatus,
     display_status: CaseDisplayStatus,
-    primary_entity: CasePrimaryEntity,
-    financing_status: z.union([FinancingStatus, z.null()]).optional(),
     agreement_reference: z.union([z.string(), z.null()]).optional(),
     origin: CaseOrigin,
     created_at: z.string().datetime({ offset: true }),
+    request_status: z.union([RequestStatus, z.null()]).optional(),
+    started_by_lc_name: z.union([z.string(), z.null()]).optional(),
   })
+  .passthrough()
+const LcCommentNotificationItem = z
+  .object({
+    case_id: z.string().uuid(),
+    case_reference: z.string(),
+    author_display: z.union([z.string(), z.null()]).optional(),
+    commented_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const LcCommentNotificationListResponse = z
+  .object({ items: z.array(LcCommentNotificationItem) })
+  .passthrough()
+const LcPortalSummaryResponse = z
+  .object({ open_requests: z.number().int(), drafts: z.number().int() })
+  .passthrough()
+const LcCaseReviewResponse = z
+  .object({
+    case: LcCaseDetailResponse,
+    leasing_company: z.union([CaseLeasingCompanyResponse, z.null()]),
+    contracts: z.array(ReviewContractItem),
+    contract_count: z.number().int(),
+    residual_sum: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    lessee_count: z.number().int(),
+    object_count: z.number().int(),
+    earliest_contract_start: z.union([z.string(), z.null()]),
+    latest_contract_start: z.union([z.string(), z.null()]),
+    average_term_months: z.union([z.number(), z.null()]),
+  })
+  .passthrough()
+const LcWithdrawalNoticeRequest = z
+  .object({ message: z.union([z.string(), z.null()]) })
+  .partial()
   .passthrough()
 const FinancingKind = z.enum(["single", "package"])
-const FinancingRead = z
+const CalculationBlocker = z.enum([
+  "no_contracts",
+  "contract_start_missing",
+  "instalment_amount_missing",
+  "term_missing",
+  "repayment_terms_missing",
+  "agreed_loan_amount_missing",
+])
+const CalculationBlockerRead = z
   .object({
-    id: z.string().uuid(),
-    case_id: z.string().uuid(),
-    financing_reference: z.string(),
-    framework_agreement_id: z.union([z.string(), z.null()]),
-    product_template_id: z.union([z.string(), z.null()]),
-    product_template_version: z.union([z.string(), z.null()]),
-    kind: FinancingKind,
-    refinancing_rate: z.union([z.string(), z.null()]),
-    refinancing_quota_override: z.union([z.string(), z.null()]),
-    effective_quota: z.union([z.string(), z.null()]),
-    value_date: z.union([z.string(), z.null()]),
-    agreed_loan_amount: z.union([z.string(), z.null()]),
-    committed_rate: z.union([z.string(), z.null()]),
-    committed_rate_expiry: z.union([z.string(), z.null()]),
-    rate_lock_days: z.union([z.number(), z.null()]),
-    settlement_ready: z.boolean(),
-    calculation_state: z.string(),
-    calculation_version: z.number().int(),
-    loan_number: z.union([z.string(), z.null()]),
-    loan_account: z.union([z.string(), z.null()]),
-    status: FinancingStatus,
-    created_by: z.string().uuid(),
-    created_at: z.string().datetime({ offset: true }),
+    code: CalculationBlocker,
+    contract_id: z.union([z.string(), z.null()]).optional(),
+    contract_number: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
+const CalculationStaleCause = z.enum([
+  "terms",
+  "product_template",
+  "settlement_correction",
+  "contract_set",
+  "framework_agreement",
+])
 const MeasurementBasis = z.enum([
   "present_value",
   "ratio_on_acquisition_cost",
@@ -733,6 +721,7 @@ const RefinancingForm = z.enum(["annuity", "fixed_principal", "bullet"])
 const ScheduleLineResponse = z
   .object({
     period_index: z.number().int(),
+    due_date: z.union([z.string(), z.null()]).optional(),
     opening_balance: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     interest: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     principal: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
@@ -747,6 +736,17 @@ const ExcludedPaymentResponse = z
     reason: z.string(),
   })
   .passthrough()
+const DiscountingRowResponse = z
+  .object({
+    period_index: z.number().int(),
+    due_date: z.union([z.string(), z.null()]).optional(),
+    kind: z.enum(["instalment", "residual"]),
+    lease_payment: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    loan_payment: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    factor: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    present_value: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+  })
+  .passthrough()
 const CalculationResultResponse = z
   .object({
     basis: MeasurementBasis,
@@ -755,85 +755,90 @@ const CalculationResultResponse = z
     aggregate_instalment: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     balloon: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
     final_maturity: z.string(),
+    first_due_date: z.union([z.string(), z.null()]).optional(),
+    first_period_days: z.union([z.number(), z.null()]).optional(),
+    instalment_count: z.union([z.number(), z.null()]).optional(),
+    period_count: z.number().int(),
+    pv_instalments: z.union([z.string(), z.null()]).optional(),
+    pv_residual: z.union([z.string(), z.null()]).optional(),
+    total_interest: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    rate_used: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    payout_to_nac: z.union([z.string(), z.null()]).optional(),
     schedule: z.array(ScheduleLineResponse),
     excluded_payments: z.array(ExcludedPaymentResponse),
+    lease_instalment: z.union([z.string(), z.null()]).optional(),
+    lease_residual: z.union([z.string(), z.null()]).optional(),
+    period_rate: z.union([z.string(), z.null()]).optional(),
+    discounting: z.array(DiscountingRowResponse).optional().default([]),
+    excluded_total: z.union([z.string(), z.null()]).optional(),
+    lease_payments_total: z.union([z.string(), z.null()]).optional(),
+    acquisition_cost: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
-const ObjectRef = z
-  .object({
-    object_id: z.string().uuid(),
-    object_number: z.number().int(),
-    object_group: z.union([z.string(), z.null()]),
-    object_sub_group: z.union([z.string(), z.null()]),
-  })
-  .passthrough()
-const FinancingContractRef = z
-  .object({
-    contract_id: z.string().uuid(),
-    short_name: z.union([z.string(), z.null()]),
-    leasing_company_contract_number: z.union([z.string(), z.null()]),
-    contract_type: z.union([z.string(), z.null()]),
-    status: z.string(),
-    financing_amount_share: z.union([z.string(), z.null()]),
-    objects: z.array(ObjectRef),
-  })
-  .passthrough()
-const DecisionRef = z
-  .object({
-    request_status: z.union([z.string(), z.null()]),
-    decision_reason: z.union([z.string(), z.null()]),
-    decided_by: z.union([z.string(), z.null()]),
-    decided_at: z.union([z.string(), z.null()]),
-  })
-  .passthrough()
-const ApprovalConditionState = z.enum(["open", "met", "waived", "expired"])
-const CovenantRef = z
-  .object({
-    id: z.string().uuid(),
-    condition_text: z.string(),
-    state: ApprovalConditionState,
-    due_date: z.string(),
-    step_reference: z.union([z.string(), z.null()]),
-  })
-  .passthrough()
-const FinancingHistoryEntry = z
-  .object({
-    status: FinancingStatus,
-    changed_by: z.union([z.string(), z.null()]),
-    changed_at: z.union([z.string(), z.null()]),
-    by_system: z.boolean(),
-    ended_reason: z.union([z.string(), z.null()]),
-  })
-  .passthrough()
-const FinancingOverviewResponse = z
+const FinancingEndedReason = z.enum([
+  "term_ran_out",
+  "terminated",
+  "redeemed_early",
+])
+const FinancingRead = z
   .object({
     id: z.string().uuid(),
     case_id: z.string().uuid(),
     financing_reference: z.string(),
-    status: FinancingStatus,
-    kind: FinancingKind,
     framework_agreement_id: z.union([z.string(), z.null()]),
     product_template_id: z.union([z.string(), z.null()]),
-    lc_partner_id: z.union([z.string(), z.null()]),
+    product_template_version: z.union([z.string(), z.null()]),
+    kind: FinancingKind,
+    refinancing_rate: z.union([z.string(), z.null()]),
+    refinancing_quota_override: z.union([z.string(), z.null()]),
+    effective_quota: z.union([z.string(), z.null()]),
+    value_date: z.union([z.string(), z.null()]),
+    first_instalment_date: z.union([z.string(), z.null()]),
+    instalment_day: z.union([z.number(), z.null()]),
+    default_instalment_day: z.number().int().optional().default(1),
+    rate_quoted_on: z.union([z.string(), z.null()]),
+    agreed_loan_amount: z.union([z.string(), z.null()]),
+    committed_rate: z.union([z.string(), z.null()]),
+    committed_rate_expiry: z.union([z.string(), z.null()]),
+    rate_lock_days: z.union([z.number(), z.null()]),
+    settlement_ready: z.boolean(),
+    calculation_blockers: z
+      .array(CalculationBlockerRead)
+      .optional()
+      .default([]),
+    calculation_state: z.string(),
+    calculation_version: z.number().int(),
+    calculation_invalidated_by: z
+      .union([CalculationStaleCause, z.null()])
+      .optional(),
+    calculation_result: z
+      .union([CalculationResultResponse, z.null()])
+      .optional(),
+    calculated_at: z.union([z.string(), z.null()]).optional(),
     loan_number: z.union([z.string(), z.null()]),
     loan_account: z.union([z.string(), z.null()]),
-    refinancing_rate: z.union([z.string(), z.null()]),
-    effective_quota: z.union([z.string(), z.null()]),
-    collateral_total: z.union([z.string(), z.null()]),
-    contract_count: z.number().int(),
-    object_count: z.number().int(),
-    nominal_claim: z.union([z.string(), z.null()]),
-    present_value: z.union([z.string(), z.null()]),
-    financing_amount: z.union([z.string(), z.null()]),
-    financing_quote_pct: z.union([z.string(), z.null()]),
-    figures_pending: z.boolean(),
-    bank_figures_visible: z.boolean(),
-    contracts: z.array(FinancingContractRef),
-    originating_decision: z.union([DecisionRef, z.null()]),
-    covenants: z.array(CovenantRef),
-    open_covenant_count: z.number().int(),
-    financing_history: z.array(FinancingHistoryEntry),
+    status: FinancingStatus,
+    ended_reason: z.union([FinancingEndedReason, z.null()]).optional(),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
   })
+  .passthrough()
+const CalculatePreviewRequest = z
+  .object({
+    refinancing_rate: z.union([z.number(), z.string(), z.null()]),
+    refinancing_quota_override: z.union([z.number(), z.string(), z.null()]),
+    value_date: z.union([z.string(), z.null()]),
+    first_instalment_date: z.union([z.string(), z.null()]),
+    instalment_day: z.union([z.number(), z.null()]),
+    rate_quoted_on: z.union([z.string(), z.null()]).optional(),
+    rate_lock_days: z.union([z.number(), z.null()]).optional(),
+    agreed_loan_amount: z.union([z.number(), z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const calculate_case_financing_api_v1_cases__case_id__financing_calculate_post_Body =
+  z.union([CalculatePreviewRequest, z.null()])
+const RunOutRequest = z
+  .object({ reason: z.string().min(1).max(500) })
   .passthrough()
 const RecordLoanValuesRequest = z
   .object({
@@ -842,19 +847,17 @@ const RecordLoanValuesRequest = z
   })
   .partial()
   .passthrough()
-const SetRefinancingRateRequest = z
-  .object({ rate: z.union([z.number(), z.string()]) })
-  .passthrough()
-const OverrideQuotaRequest = z
-  .object({ quota: z.union([z.number(), z.string()]) })
-  .passthrough()
-const SetValueDateRequest = z.object({ value_date: z.string() }).passthrough()
-const SetAgreedLoanAmountRequest = z
-  .object({ agreed_loan_amount: z.union([z.number(), z.string()]) })
-  .passthrough()
-const CommitRateRequest = z
-  .object({ lock_days: z.number().int().default(7) })
-  .partial()
+const UpdateTermsRequest = z
+  .object({
+    refinancing_rate: z.union([z.number(), z.string(), z.null()]),
+    refinancing_quota_override: z.union([z.number(), z.string(), z.null()]),
+    value_date: z.union([z.string(), z.null()]),
+    first_instalment_date: z.union([z.string(), z.null()]),
+    instalment_day: z.union([z.number(), z.null()]),
+    rate_quoted_on: z.union([z.string(), z.null()]),
+    rate_lock_days: z.union([z.number(), z.null()]),
+    agreed_loan_amount: z.union([z.number(), z.string(), z.null()]).optional(),
+  })
   .passthrough()
 const CorrectSettlementRequest = z
   .object({ reason: z.string().min(1) })
@@ -867,6 +870,7 @@ const AddApprovalConditionRequest = z
     evidence_document_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
+const ApprovalConditionState = z.enum(["open", "met", "waived", "expired"])
 const ApprovalConditionResponse = z
   .object({
     id: z.string().uuid(),
@@ -890,57 +894,8 @@ const ApprovalConditionListResponse = z
   })
   .passthrough()
 const WaiveConditionRequest = z
-  .object({ reason: z.string().min(1), waiver_expiry: z.string() })
-  .passthrough()
-const GovernedActionType = z.enum([
-  "tenant_create",
-  "tenant_suspend",
-  "tenant_reactivate",
-  "tenant_archive",
-  "user_platform_invite",
-  "user_role_change",
-  "user_auditor_period_update",
-  "user_email_change",
-  "module_activate",
-  "partner_archive",
-  "partner_confirm",
-  "partner_role_assign",
-  "partner_identity_change",
-  "partner_merge",
-  "financing_approval_condition_waive",
-])
-const GovernedActionStatus = z.enum([
-  "pending",
-  "approved",
-  "rejected",
-  "withdrawn",
-  "expired",
-])
-const GovernedActionResponse = z
-  .object({
-    id: z.string().uuid(),
-    action_type: GovernedActionType,
-    subject_type: z.string(),
-    subject_id: z.union([z.string(), z.null()]),
-    tenant_id: z.union([z.string(), z.null()]),
-    status: GovernedActionStatus,
-    initiator_id: z.string().uuid(),
-    approver_id: z.union([z.string(), z.null()]),
-    display_snapshot: z.object({}).partial().passthrough(),
-    initiator_snapshot: z.object({}).partial().passthrough(),
-    approver_snapshot: z.union([
-      z.object({}).partial().passthrough(),
-      z.null(),
-    ]),
-    execution_params: z.object({}).partial().passthrough(),
-    reason: z.union([z.string(), z.null()]),
-    approver_comment: z.union([z.string(), z.null()]),
-    expires_at: z.union([z.string(), z.null()]),
-    resolved_at: z.union([z.string(), z.null()]),
-    correlation_id: z.union([z.string(), z.null()]),
-    created_at: z.string().datetime({ offset: true }),
-    updated_at: z.string().datetime({ offset: true }),
-  })
+  .object({ comment: z.union([z.string(), z.null()]) })
+  .partial()
   .passthrough()
 const FinancingComponentResponse = z
   .object({
@@ -976,10 +931,18 @@ const PaymentPlanEntryResponse = z
     origin: z.string(),
   })
   .passthrough()
+const PlanCoverageResponse = z
+  .object({
+    covered_months: z.number().int(),
+    term_months: z.number().int(),
+    covers_term: z.boolean(),
+  })
+  .passthrough()
 const PaymentPlanResponse = z
   .object({
     component: z.union([FinancingComponentResponse, z.null()]),
     entries: z.array(PaymentPlanEntryResponse),
+    coverage: z.union([PlanCoverageResponse, z.null()]).optional(),
   })
   .passthrough()
 const ManualPlanRowRequest = z
@@ -992,59 +955,11 @@ const ManualPlanRowRequest = z
 const SetManualPlanRequest = z
   .object({ rows: z.array(ManualPlanRowRequest).min(1) })
   .passthrough()
-const RefinancedCashFlowLine = z
-  .object({
-    due_date: z.string(),
-    amount: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-  })
+const FinancingFilterOption = z
+  .object({ value: z.string(), label: z.string() })
   .passthrough()
-const RefinancedCashFlowResponse = z
-  .object({
-    contract_id: z.string().uuid(),
-    total_instalments: z.number().int(),
-    refinanced_instalments: z.number().int(),
-    lines: z.array(RefinancedCashFlowLine),
-  })
-  .passthrough()
-const RemainingBalanceResponse = z
-  .object({
-    contract_id: z.string().uuid(),
-    as_of: z.string(),
-    remaining_balance: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-  })
-  .passthrough()
-const ContractContributionItem = z
-  .object({
-    contract_id: z.string().uuid(),
-    status: z.string(),
-    financing_amount_share: z.union([z.string(), z.null()]),
-    refinanced_instalments: z.number().int(),
-  })
-  .passthrough()
-const ContractContributionListResponse = z
-  .object({
-    case_id: z.string().uuid(),
-    contributions: z.array(ContractContributionItem),
-    contract_count: z.number().int(),
-    contribution_sum: z.union([z.string(), z.null()]),
-    figures_pending: z.boolean(),
-  })
-  .passthrough()
-const PerContractSideResponse = z
-  .object({
-    contract_id: z.string().uuid(),
-    component: FinancingComponentResponse,
-    refinanced_side: RefinancedCashFlowResponse,
-    lease_side: z.array(PaymentPlanEntryResponse),
-    absent_blocks: z.array(z.string()),
-  })
-  .passthrough()
-const FinancingRemainingBalanceResponse = z
-  .object({
-    case_id: z.string().uuid(),
-    as_of: z.string(),
-    remaining_balance: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
-  })
+const FinancingFilterOptionsResponse = z
+  .object({ items: z.array(FinancingFilterOption) })
   .passthrough()
 const FinancingListItem = z
   .object({
@@ -1054,6 +969,7 @@ const FinancingListItem = z
     case_reference: z.string(),
     lc_number: z.union([z.string(), z.null()]),
     status: FinancingStatus,
+    ended_reason: z.union([FinancingEndedReason, z.null()]).optional(),
     kind: FinancingKind,
     refinancing_rate: z.union([z.string(), z.null()]),
     value_date: z.union([z.string(), z.null()]),
@@ -1062,6 +978,12 @@ const FinancingListItem = z
     created_at: z.string().datetime({ offset: true }),
     lc_partner_name: z.union([z.string(), z.null()]).optional(),
     contract_count: z.number().int().optional().default(0),
+    loan_account: z.union([z.string(), z.null()]).optional(),
+    soll_amount: z.union([z.string(), z.null()]).optional(),
+    haben_amount: z.union([z.string(), z.null()]).optional(),
+    outstanding: z.boolean().optional().default(false),
+    payout_amount: z.union([z.string(), z.null()]).optional(),
+    account_no: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const FinancingListResponse = z
@@ -1073,7 +995,364 @@ const FinancingListResponse = z
     total_pages: z.number().int(),
   })
   .passthrough()
+const FinancingTabCounts = z
+  .object({
+    contracts: z.number().int(),
+    collaterals: z.number().int(),
+    covenants: z.number().int(),
+    redemptions: z.number().int(),
+  })
+  .passthrough()
+const FinancingBalanceRead = z
+  .object({
+    outstanding: z.union([z.string(), z.null()]),
+    as_of: z.string(),
+    payout: z.union([z.string(), z.null()]),
+    approved_loan_amount: z.union([z.string(), z.null()]).optional(),
+    provisional: z.boolean(),
+  })
+  .passthrough()
+const RepaymentRowRead = z
+  .object({
+    due_date: z.union([z.string(), z.null()]),
+    payment: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    principal: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    interest: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    closing_balance: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    kind: z.union([z.enum(["payout", "redemption"]), z.null()]),
+    is_current: z.boolean(),
+    is_future: z.boolean(),
+  })
+  .passthrough()
+const RepaymentRead = z
+  .object({
+    rows: z.array(RepaymentRowRead),
+    instalment: z.union([z.string(), z.null()]),
+    instalments_due: z.number().int(),
+    instalment_count: z.number().int(),
+    repayment_start: z.union([z.string(), z.null()]),
+    final_instalment: z.union([z.string(), z.null()]),
+    residual: z.union([z.string(), z.null()]),
+    maturity: z.union([z.string(), z.null()]),
+    total_interest: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    outstanding: z.union([z.string(), z.null()]),
+    adjusted_for_redemptions: z.boolean().optional().default(false),
+    early_redemption_case_id: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const ContractShareRead = z
+  .object({
+    contract_id: z.string().uuid(),
+    amount: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    percent: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+  })
+  .passthrough()
+const FinancingDetailRead = z
+  .object({
+    id: z.string().uuid(),
+    case_id: z.string().uuid(),
+    financing_reference: z.string(),
+    framework_agreement_id: z.union([z.string(), z.null()]),
+    product_template_id: z.union([z.string(), z.null()]),
+    product_template_version: z.union([z.string(), z.null()]),
+    kind: FinancingKind,
+    refinancing_rate: z.union([z.string(), z.null()]),
+    refinancing_quota_override: z.union([z.string(), z.null()]),
+    effective_quota: z.union([z.string(), z.null()]),
+    value_date: z.union([z.string(), z.null()]),
+    first_instalment_date: z.union([z.string(), z.null()]),
+    instalment_day: z.union([z.number(), z.null()]),
+    default_instalment_day: z.number().int().optional().default(1),
+    rate_quoted_on: z.union([z.string(), z.null()]),
+    agreed_loan_amount: z.union([z.string(), z.null()]),
+    committed_rate: z.union([z.string(), z.null()]),
+    committed_rate_expiry: z.union([z.string(), z.null()]),
+    rate_lock_days: z.union([z.number(), z.null()]),
+    settlement_ready: z.boolean(),
+    calculation_blockers: z
+      .array(CalculationBlockerRead)
+      .optional()
+      .default([]),
+    calculation_state: z.string(),
+    calculation_version: z.number().int(),
+    calculation_invalidated_by: z
+      .union([CalculationStaleCause, z.null()])
+      .optional(),
+    calculation_result: z
+      .union([CalculationResultResponse, z.null()])
+      .optional(),
+    calculated_at: z.union([z.string(), z.null()]).optional(),
+    loan_number: z.union([z.string(), z.null()]),
+    loan_account: z.union([z.string(), z.null()]),
+    status: FinancingStatus,
+    ended_reason: z.union([FinancingEndedReason, z.null()]).optional(),
+    created_by: z.string().uuid(),
+    created_at: z.string().datetime({ offset: true }),
+    case_reference: z.string(),
+    lc_partner_id: z.union([z.string(), z.null()]),
+    lc_partner_name: z.union([z.string(), z.null()]),
+    framework_agreement_name: z.union([z.string(), z.null()]),
+    product_template_name: z.union([z.string(), z.null()]),
+    product_template_version_number: z.union([z.string(), z.null()]).optional(),
+    soll_amount: z.union([z.string(), z.null()]),
+    soll_date: z.union([z.string(), z.null()]),
+    haben_amount: z.union([z.string(), z.null()]),
+    haben_date: z.union([z.string(), z.null()]),
+    loan_values_editable: z.boolean(),
+    updated_at: z.string().datetime({ offset: true }),
+    counts: FinancingTabCounts,
+    balance: FinancingBalanceRead,
+    repayment: z.union([RepaymentRead, z.null()]),
+    contract_shares: z.array(ContractShareRead).optional().default([]),
+  })
+  .passthrough()
+const UpdateMaintainedValuesRequest = z.object({
+  expected_updated_at: z.string().datetime({ offset: true }),
+  loan_number: z.union([z.string(), z.null()]).optional(),
+  loan_account: z.union([z.string(), z.null()]).optional(),
+  soll_amount: z.union([z.number(), z.string(), z.null()]).optional(),
+  soll_date: z.union([z.string(), z.null()]).optional(),
+  haben_amount: z.union([z.number(), z.string(), z.null()]).optional(),
+  haben_date: z.union([z.string(), z.null()]).optional(),
+})
+const MiscDocumentResponse = z
+  .object({
+    id: z.string().uuid(),
+    document_id: z.string().uuid(),
+    file_name: z.union([z.string(), z.null()]),
+    size: z.union([z.number(), z.null()]),
+    document_type_code: z.union([z.string(), z.null()]),
+    document_label: z.union([z.string(), z.null()]),
+    uploaded_at_utc: z.string().datetime({ offset: true }),
+    uploaded_at_local: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const FinancingDocumentListResponse = z
+  .object({
+    financing_id: z.string().uuid(),
+    documents: z.array(MiscDocumentResponse),
+  })
+  .passthrough()
+const FinancingDocumentType = z.enum([
+  "original_agreement",
+  "addendum",
+  "correspondence",
+  "other",
+])
+const Body_add_financing_document_api_v1_financings__financing_id__documents_post =
+  z
+    .object({
+      file: z.string(),
+      document_type: z.union([FinancingDocumentType, z.null()]).optional(),
+      document_label: z.union([z.string(), z.null()]).optional(),
+    })
+    .passthrough()
+const DocumentRowType = z.enum([
+  "DAT_REPORT",
+  "LEASE_CONTRACT",
+  "MISCELLANEOUS",
+  "CALCULATION_DATA_SHEET",
+])
+const DocumentRowSource = z.enum(["uploaded", "generated"])
+const DocumentOwnerKind = z.enum(["financing", "contract", "object"])
+const DocumentOwnerRead = z
+  .object({
+    kind: DocumentOwnerKind,
+    id: z.string().uuid(),
+    reference: z.union([z.string(), z.null()]),
+    description: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const DocumentManagedOn = z.literal("collateral_card")
+const DocumentRowRead = z
+  .object({
+    document_id: z.string().uuid(),
+    entry_id: z.union([z.string(), z.null()]),
+    file_name: z.union([z.string(), z.null()]),
+    size: z.union([z.number(), z.null()]),
+    type: DocumentRowType,
+    source: DocumentRowSource,
+    owner: DocumentOwnerRead,
+    date_utc: z.string().datetime({ offset: true }),
+    date_local: z.string().datetime({ offset: true }),
+    label: z.union([z.string(), z.null()]),
+    removable: z.boolean(),
+    managed_on: z.union([DocumentManagedOn, z.null()]),
+  })
+  .passthrough()
+const DocumentRowListResponse = z
+  .object({ rows: z.array(DocumentRowRead) })
+  .passthrough()
+const Body_upload_financing_document_row_api_v1_financings__financing_id__document_rows_post =
+  z
+    .object({
+      file: z.string(),
+      document_type: z.string(),
+      document_label: z.union([z.string(), z.null()]).optional(),
+    })
+    .passthrough()
+const UpdateFinancingDocumentRequest = z
+  .object({
+    document_type: z.union([FinancingDocumentType, z.null()]),
+    document_label: z.union([z.string(), z.null()]),
+  })
+  .partial()
+const CollateralProvider = z
+  .object({
+    name: z.string(),
+    street: z.union([z.string(), z.null()]),
+    house_number: z.union([z.string(), z.null()]),
+    postal_code: z.union([z.string(), z.null()]),
+    city: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const FinancingSecurityItem = z
+  .object({
+    collateral_id: z.string().uuid(),
+    collateral_type: z.string(),
+    value: z.union([z.string(), z.null()]),
+    guarantor_partner_id: z.union([z.string(), z.null()]),
+    guarantor_display_name: z.union([z.string(), z.null()]),
+    evidence_document_id: z.union([z.string(), z.null()]),
+    evidence_document_name: z.union([z.string(), z.null()]),
+    evidence_document_date: z.union([z.string(), z.null()]),
+    provider: z.union([CollateralProvider, z.null()]),
+    kind_of_obligation: z.union([z.string(), z.null()]),
+    contract_id: z.string().uuid(),
+    contract_number: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const FinancingSecuritiesResponse = z
+  .object({
+    financing_id: z.string().uuid(),
+    items: z.array(FinancingSecurityItem),
+  })
+  .passthrough()
+const CollateralType = z.enum([
+  "chattel_mortgage",
+  "assignment_of_receivables",
+  "guarantee",
+])
+const CollateralEvidenceItem = z
+  .object({
+    document_id: z.string().uuid(),
+    file_name: z.union([z.string(), z.null()]),
+    size: z.union([z.number(), z.null()]),
+    uploaded_at_utc: z.string().datetime({ offset: true }),
+    uploaded_at_local: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const CollateralRecheckState = z.enum(["clear", "needs_recheck"])
+const CollateralDecisionBlock = z.enum([
+  "not_back_office",
+  "proposer",
+  "step_35_resolver",
+])
+const CollateralValueItem = z
+  .object({
+    total_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    set_by: z.string().uuid(),
+    set_by_name: z.union([z.string(), z.null()]),
+    set_at: z.string().datetime({ offset: true }),
+  })
+  .passthrough()
+const app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse =
+  z
+    .object({
+      id: z.string().uuid(),
+      financing_id: z.string().uuid(),
+      collateral_type: z.union([CollateralType, z.null()]),
+      current_total_eur: z.union([z.string(), z.null()]),
+      proposed_total_eur: z.union([z.string(), z.null()]),
+      evidence: z.array(CollateralEvidenceItem),
+      recheck_state: CollateralRecheckState,
+      redetermined_by: z.union([z.string(), z.null()]),
+      redetermined_by_name: z.union([z.string(), z.null()]),
+      redetermined_at: z.union([z.string(), z.null()]),
+      confirmed_by: z.union([z.string(), z.null()]),
+      confirmed_by_name: z.union([z.string(), z.null()]),
+      confirmed_at: z.union([z.string(), z.null()]),
+      decision_block: z.union([CollateralDecisionBlock, z.null()]),
+      value_history: z.array(CollateralValueItem),
+    })
+    .passthrough()
+const SetCollateralTypeRequest = z
+  .object({ collateral_type: CollateralType })
+  .passthrough()
+const SetCollateralTotalRequest = z
+  .object({ total_eur: z.union([z.number(), z.string()]) })
+  .passthrough()
+const Body_add_financing_collateral_evidence_api_v1_financings__financing_id__collateral_evidence_post =
+  z.object({ file: z.string() }).passthrough()
+const RedetermineCollateralRequest = z
+  .object({ total_eur: z.union([z.number(), z.string()]) })
+  .passthrough()
+const PortalFinancingStatus = z.enum([
+  "in_progress",
+  "committed",
+  "paid_out",
+  "running",
+  "ended",
+  "cancelled",
+])
+const LcFinancingListItem = z
+  .object({
+    id: z.string().uuid(),
+    financing_reference: z.string(),
+    kind: FinancingKind,
+    framework_agreement_reference: z.union([z.string(), z.null()]),
+    contract_count: z.number().int(),
+    portal_status: PortalFinancingStatus,
+    value_date: z.union([z.string(), z.null()]),
+    payout_amount: z.union([z.string(), z.null()]),
+    outstanding_balance: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const LcFinancingListResponse = z
+  .object({
+    items: z.array(LcFinancingListItem),
+    total: z.number().int(),
+    page: z.number().int(),
+    per_page: z.number().int(),
+    total_pages: z.number().int(),
+  })
+  .passthrough()
+const LcFinancingAgreementOption = z
+  .object({ id: z.string().uuid(), name: z.string() })
+  .passthrough()
+const LcFinancingAgreementOptionsResponse = z
+  .object({ items: z.array(LcFinancingAgreementOption) })
+  .passthrough()
+const PortalDocumentTypeItem = z
+  .object({ type_code: z.string(), type_name: z.string() })
+  .passthrough()
+const PortalDocumentTypesResponse = z
+  .object({ items: z.array(PortalDocumentTypeItem) })
+  .passthrough()
+const Body_upload_portal_partner_document_api_v1_lc_partners__id__documents_post =
+  z
+    .object({
+      document_type_code: z.string(),
+      file: z.string(),
+      document_date: z.union([z.string(), z.null()]).optional(),
+      label: z.union([z.string(), z.null()]).optional(),
+    })
+    .passthrough()
+const PartnerDocumentItem = z
+  .object({
+    id: z.string(),
+    media_object_id: z.string(),
+    file_name: z.union([z.string(), z.null()]),
+    document_type_code: z.union([z.string(), z.null()]),
+    document_type_name: z.union([z.string(), z.null()]),
+    document_date: z.union([z.string(), z.null()]),
+    label: z.union([z.string(), z.null()]),
+    uploaded_at: z.string().datetime({ offset: true }),
+    uploaded_by_name: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
 const ContractDeferredState = z.enum(["active", "deferred"])
+const deferred_state = z.union([ContractDeferredState, z.null()]).optional()
 const ContractStatus = z.enum([
   "active",
   "financed",
@@ -1086,6 +1365,7 @@ const ContractStatus = z.enum([
   "redeemed",
   "closed",
 ])
+const PerformanceStatus = z.enum(["performing", "non_performing"])
 const ContractCompleteness = z.enum(["complete", "incomplete"])
 const ContractListItem = z
   .object({
@@ -1096,6 +1376,7 @@ const ContractListItem = z
     contract_residual: z.union([z.string(), z.null()]),
     deferred_state: ContractDeferredState,
     contract_status: ContractStatus,
+    performance_status: PerformanceStatus,
     batch_id: z.union([z.string(), z.null()]),
     contract_origin: z.union([z.string(), z.null()]),
     completeness: ContractCompleteness,
@@ -1123,14 +1404,20 @@ const ContractListItem = z
     sublease: z.union([z.boolean(), z.null()]).optional(),
     contract_end: z.union([z.string(), z.null()]).optional(),
     residual_value_due_on: z.union([z.string(), z.null()]).optional(),
+    residual_value_due_basis: z.union([z.string(), z.null()]).optional(),
     remarks: z.union([z.string(), z.null()]).optional(),
     net_acquisition_costs: z.union([z.string(), z.null()]).optional(),
     lease_interest_rate: z.union([z.string(), z.null()]).optional(),
+    refinancing_number: z.union([z.string(), z.null()]).optional(),
+    payment_method: z.union([z.string(), z.null()]).optional(),
+    payment_mode: z.union([z.string(), z.null()]).optional(),
     due_date_last_instalment: z.union([z.string(), z.null()]).optional(),
     amortisation_warning: z.union([z.string(), z.null()]).optional(),
     settlement_blockers: z.array(z.string()).optional(),
     lessee_name: z.union([z.string(), z.null()]).optional(),
     object_count: z.number().int().optional().default(0),
+    first_object_description: z.union([z.string(), z.null()]).optional(),
+    first_object_plate: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const ContractListResponse = z
@@ -1145,6 +1432,8 @@ const InstalmentFrequency = z.enum([
   "annual",
   "custom",
 ])
+const PaymentMethod = z.enum(["sepa_direct_debit", "self_payer"])
+const PaymentMode = z.enum(["in_advance", "in_arrears"])
 const ContractCreate = z
   .object({
     lessee_partner_id: z.union([z.string(), z.null()]),
@@ -1172,7 +1461,9 @@ const ContractCreate = z
     remarks: z.union([z.string(), z.null()]),
     net_acquisition_costs: z.union([z.number(), z.string(), z.null()]),
     lease_interest_rate: z.union([z.number(), z.string(), z.null()]),
-    due_date_last_instalment: z.union([z.string(), z.null()]),
+    refinancing_number: z.union([z.string(), z.null()]),
+    payment_method: z.union([PaymentMethod, z.null()]),
+    payment_mode: z.union([PaymentMode, z.null()]),
     batch_id: z.union([z.string(), z.null()]),
   })
   .partial()
@@ -1186,6 +1477,7 @@ const ContractRead = z
     contract_residual: z.union([z.string(), z.null()]),
     deferred_state: ContractDeferredState,
     contract_status: ContractStatus,
+    performance_status: PerformanceStatus,
     batch_id: z.union([z.string(), z.null()]),
     contract_origin: z.union([z.string(), z.null()]),
     completeness: ContractCompleteness,
@@ -1213,9 +1505,13 @@ const ContractRead = z
     sublease: z.union([z.boolean(), z.null()]).optional(),
     contract_end: z.union([z.string(), z.null()]).optional(),
     residual_value_due_on: z.union([z.string(), z.null()]).optional(),
+    residual_value_due_basis: z.union([z.string(), z.null()]).optional(),
     remarks: z.union([z.string(), z.null()]).optional(),
     net_acquisition_costs: z.union([z.string(), z.null()]).optional(),
     lease_interest_rate: z.union([z.string(), z.null()]).optional(),
+    refinancing_number: z.union([z.string(), z.null()]).optional(),
+    payment_method: z.union([z.string(), z.null()]).optional(),
+    payment_mode: z.union([z.string(), z.null()]).optional(),
     due_date_last_instalment: z.union([z.string(), z.null()]).optional(),
     amortisation_warning: z.union([z.string(), z.null()]).optional(),
     settlement_blockers: z.array(z.string()).optional(),
@@ -1235,10 +1531,70 @@ const PackageTotalsRead = z
 const BulkRemoveRequest = z
   .object({
     contract_ids: z.array(z.string().uuid()).min(1).max(100),
-    reason: z.string().min(1).max(255),
+    reason: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const BulkRemoveResponse = z.object({ removed: z.number().int() }).passthrough()
+const ContractFilterOption = z
+  .object({ value: z.string(), label: z.string() })
+  .passthrough()
+const ContractFilterOptionsResponse = z
+  .object({ items: z.array(ContractFilterOption) })
+  .passthrough()
+const ContractRecordRef = z
+  .object({ id: z.string().uuid(), name: z.union([z.string(), z.null()]) })
+  .passthrough()
+const ContractRecordFinancing = z
+  .object({
+    id: z.string().uuid(),
+    reference: z.string(),
+    status: FinancingStatus,
+    kind: FinancingKind,
+  })
+  .passthrough()
+const ContractRecordState = z.enum(["draft", "financed", "redeemed", "other"])
+const ContractRecordFigures = z
+  .object({
+    object_count: z.number().int(),
+    special_payment_sum: z.union([z.string(), z.null()]),
+    collaterals_total: z.number().int(),
+    collaterals_in_place: z.number().int(),
+    open_return_count: z.number().int().optional().default(0),
+  })
+  .passthrough()
+const ContractEditLock = z.enum([
+  "not_refinancing",
+  "contract_ended",
+  "closed_case",
+  "portal_window",
+  "settlement",
+  "set_up",
+  "paid_out",
+])
+const ContractRecordEditable = z
+  .object({
+    calculation_values: z.boolean(),
+    other_values: z.boolean(),
+    lock: z.union([ContractEditLock, z.null()]),
+    locked_fields: z.array(z.string()),
+    objects: z.boolean(),
+    objects_lock: z.union([ContractEditLock, z.null()]),
+  })
+  .passthrough()
+const ContractRecordRead = z
+  .object({
+    contract: ContractRead,
+    lessee: z.union([ContractRecordRef, z.null()]),
+    leasing_company: z.union([ContractRecordRef, z.null()]),
+    case: ContractRecordRef,
+    framework_agreement: z.union([ContractRecordRef, z.null()]),
+    financing: z.union([ContractRecordFinancing, z.null()]),
+    state: ContractRecordState,
+    servicing_actions_available: z.boolean(),
+    figures: ContractRecordFigures,
+    editable: ContractRecordEditable,
+  })
+  .passthrough()
 const ContractEdit = z
   .object({
     lessee_partner_id: z.union([z.string(), z.null()]),
@@ -1266,13 +1622,28 @@ const ContractEdit = z
     remarks: z.union([z.string(), z.null()]),
     net_acquisition_costs: z.union([z.number(), z.string(), z.null()]),
     lease_interest_rate: z.union([z.number(), z.string(), z.null()]),
-    due_date_last_instalment: z.union([z.string(), z.null()]),
+    refinancing_number: z.union([z.string(), z.null()]),
+    payment_method: z.union([PaymentMethod, z.null()]),
+    payment_mode: z.union([PaymentMode, z.null()]),
   })
   .partial()
   .passthrough()
-const ContractRemove = z
-  .object({ reason: z.string().min(1).max(255) })
+const MarkNonPerforming = z
+  .object({ note: z.union([z.string(), z.null()]) })
+  .partial()
   .passthrough()
+const ContractRemove = z
+  .object({ reason: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough()
+const ContractDefer = z
+  .object({ reason: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough()
+const defer_contract_api_v1_contracts__contract_id__defer_post_Body = z.union([
+  ContractDefer,
+  z.null(),
+])
 const ObjectSubGroupItem = z
   .object({ code: z.string(), name: z.string() })
   .passthrough()
@@ -1287,6 +1658,117 @@ const ObjectGroupItem = z
   .passthrough()
 const ObjectClassificationResponse = z
   .object({ groups: z.array(ObjectGroupItem) })
+  .passthrough()
+const LeaseCashFlowUnavailable = z.enum([
+  "no_financing",
+  "no_value_date",
+  "no_quota",
+  "no_lease_plan",
+])
+const LeasePaymentStatus = z.enum(["paid", "open", "upcoming"])
+const LeaseCashFlowRowRead = z
+  .object({
+    number: z.number().int(),
+    due_date: z.string(),
+    lease_payment: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    refinanced: z.boolean(),
+    loan_payment: z.union([z.string(), z.null()]),
+    status: LeasePaymentStatus,
+    returned_on: z.union([z.string(), z.null()]).optional(),
+    resolved_returns: z.number().int().optional().default(0),
+  })
+  .passthrough()
+const LeaseCashFlowRead = z
+  .object({
+    unavailable: z.union([LeaseCashFlowUnavailable, z.null()]),
+    as_of: z.union([z.string(), z.null()]),
+    value_date: z.union([z.string(), z.null()]),
+    quota: z.union([z.string(), z.null()]),
+    refinanced_count: z.number().int(),
+    sum_refinanced: z.union([z.string(), z.null()]),
+    applied_quota: z.union([z.string(), z.null()]),
+    payout: z.union([z.string(), z.null()]),
+    payout_recorded: z.boolean(),
+    residual_value: z.union([z.string(), z.null()]),
+    residual_due_date: z.union([z.string(), z.null()]),
+    residual_refinanced: z.union([z.string(), z.null()]),
+    rows: z.array(LeaseCashFlowRowRead),
+  })
+  .passthrough()
+const LoanPaymentPlanUnavailable = z.enum([
+  "no_financing",
+  "not_calculated",
+  "not_available",
+])
+const LoanPlanFinancingRead = z
+  .object({
+    id: z.string().uuid(),
+    reference: z.string(),
+    kind: FinancingKind,
+    contract_count: z.number().int(),
+  })
+  .passthrough()
+const LoanPlanBankDetailsRead = z
+  .object({
+    product_template_name: z.union([z.string(), z.null()]),
+    set_up_in_core_system: z.boolean(),
+  })
+  .passthrough()
+const LoanPaymentPlanRead = z
+  .object({
+    unavailable: z.union([LoanPaymentPlanUnavailable, z.null()]),
+    financing: z.union([LoanPlanFinancingRead, z.null()]),
+    bank: z.union([LoanPlanBankDetailsRead, z.null()]),
+    adjusted_for_redemptions: z.boolean(),
+    rows: z.array(RepaymentRowRead),
+    total_payment: z.union([z.string(), z.null()]),
+    total_principal: z.union([z.string(), z.null()]),
+    total_interest: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const DirectDebitReturnReason = z.enum([
+  "insufficient_funds",
+  "account_closed_or_blocked",
+  "no_valid_mandate",
+  "disputed_by_debtor",
+  "other",
+])
+const DirectDebitReturnStatus = z.enum(["open", "resolved"])
+const DirectDebitReturnRead = z
+  .object({
+    id: z.string().uuid(),
+    due_date: z.string(),
+    returned_on: z.string(),
+    reason: DirectDebitReturnReason,
+    reason_other: z.union([z.string(), z.null()]),
+    status: DirectDebitReturnStatus,
+    reported_on: z.string(),
+    reported_by: z.union([z.string(), z.null()]),
+    recorded_at: z.string().datetime({ offset: true }),
+    recorded_by: z.union([z.string(), z.null()]),
+    resolved_on: z.union([z.string(), z.null()]),
+    resolution_note: z.union([z.string(), z.null()]),
+    resolved_at: z.union([z.string(), z.null()]),
+    resolved_by: z.union([z.string(), z.null()]),
+  })
+  .passthrough()
+const DirectDebitReturnListResponse = z
+  .object({ items: z.array(DirectDebitReturnRead) })
+  .passthrough()
+const DirectDebitReturnCreate = z
+  .object({
+    due_date: z.string(),
+    returned_on: z.string(),
+    reported_on: z.string(),
+    reason: DirectDebitReturnReason,
+    reason_other: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const DirectDebitReturnResolve = z
+  .object({
+    resolved_on: z.string(),
+    note: z.union([z.string(), z.null()]).optional(),
+  })
   .passthrough()
 const LeaseObjectRead = z
   .object({
@@ -1315,14 +1797,18 @@ const LeaseObjectRead = z
     dat_evidence_status: z.union([z.string(), z.null()]),
     dat_evidence_document_id: z.union([z.string(), z.null()]),
     location_and_region: z.union([z.string(), z.null()]),
+    object_location: z.union([z.string(), z.null()]).optional(),
+    supplier_name: z.union([z.string(), z.null()]).optional(),
+    registration_part_two_status: z.union([z.string(), z.null()]).optional(),
+    insurance_proof_status: z.union([z.string(), z.null()]).optional(),
+    duplicate_check_status: z.union([z.string(), z.null()]).optional(),
     removed_at: z.union([z.string(), z.null()]),
     removal_reason: z.union([z.string(), z.null()]),
     created_by: z.string().uuid(),
     created_at: z.string().datetime({ offset: true }),
     residual_warning: z.union([z.string(), z.null()]).optional(),
-    capped_collateral_figure: z.union([z.string(), z.null()]).optional(),
-    cap_applied: z.boolean().optional().default(false),
     missing_for_vehicle: z.array(z.string()).optional(),
+    missing_fields: z.array(z.string()).optional(),
   })
   .passthrough()
 const LeaseObjectListResponse = z
@@ -1331,32 +1817,50 @@ const LeaseObjectListResponse = z
 const NewOrUsed = z.enum(["new", "used"])
 const MarketValueIndicator = z.literal("i_o")
 const DATEvidenceStatus = z.enum(["pending", "uploaded"])
+const ObjectLocation = z.enum(["domestic", "foreign"])
+const RegistrationPartTwoStatus = z.literal("checked")
+const InsuranceProofStatus = z.enum(["in_place", "missing"])
+const DuplicateCheckStatus = z.enum(["clear", "duplicate_found"])
 const LeaseObjectCreate = z
   .object({
-    object_group: z.union([z.string(), z.null()]),
-    object_sub_group: z.union([z.string(), z.null()]),
-    object_description: z.union([z.string(), z.null()]),
-    manufacturer: z.union([z.string(), z.null()]),
-    brand: z.union([z.string(), z.null()]),
-    year_of_manufacture: z.union([z.number(), z.null()]),
-    chassis_or_serial_number: z.union([z.string(), z.null()]),
-    registration_plate: z.union([z.string(), z.null()]),
-    vehicle_registration_document_number: z.union([z.string(), z.null()]),
-    new_or_used: z.union([NewOrUsed, z.null()]),
-    acquisition_cost: z.union([z.number(), z.string(), z.null()]),
-    residual_value: z.union([z.number(), z.string(), z.null()]),
-    special_payment: z.union([z.number(), z.string(), z.null()]),
-    market_value: z.union([z.number(), z.string(), z.null()]),
-    market_value_indicator: z.union([MarketValueIndicator, z.null()]),
-    appraised_value: z.union([z.number(), z.string(), z.null()]),
-    replacement_value: z.union([z.number(), z.string(), z.null()]),
-    value_as_at: z.union([z.string(), z.null()]),
-    market_value_as_at: z.union([z.string(), z.null()]),
-    dat_evidence_status: z.union([DATEvidenceStatus, z.null()]),
-    dat_evidence_document_id: z.union([z.string(), z.null()]),
-    location_and_region: z.union([z.string(), z.null()]),
+    object_group: z.union([z.string(), z.null()]).optional(),
+    object_sub_group: z.union([z.string(), z.null()]).optional(),
+    object_description: z.union([z.string(), z.null()]).optional(),
+    manufacturer: z.union([z.string(), z.null()]).optional(),
+    brand: z.union([z.string(), z.null()]).optional(),
+    year_of_manufacture: z.union([z.number(), z.null()]).optional(),
+    chassis_or_serial_number: z.union([z.string(), z.null()]).optional(),
+    registration_plate: z.union([z.string(), z.null()]).optional(),
+    vehicle_registration_document_number: z
+      .union([z.string(), z.null()])
+      .optional(),
+    new_or_used: z.union([NewOrUsed, z.null()]).optional(),
+    acquisition_cost: z.union([z.number(), z.string()]),
+    residual_value: z.union([z.number(), z.string(), z.null()]).optional(),
+    special_payment: z.union([z.number(), z.string(), z.null()]).optional(),
+    market_value: z.union([z.number(), z.string(), z.null()]).optional(),
+    market_value_indicator: z
+      .union([MarketValueIndicator, z.null()])
+      .optional(),
+    appraised_value: z.union([z.number(), z.string(), z.null()]).optional(),
+    replacement_value: z.union([z.number(), z.string(), z.null()]).optional(),
+    value_as_at: z.union([z.string(), z.null()]).optional(),
+    market_value_as_at: z.union([z.string(), z.null()]).optional(),
+    dat_evidence_status: z.union([DATEvidenceStatus, z.null()]).optional(),
+    dat_evidence_document_id: z.union([z.string(), z.null()]).optional(),
+    location_and_region: z.union([z.string(), z.null()]).optional(),
+    object_location: z.union([ObjectLocation, z.null()]).optional(),
+    supplier_name: z.union([z.string(), z.null()]).optional(),
+    registration_part_two_status: z
+      .union([RegistrationPartTwoStatus, z.null()])
+      .optional(),
+    insurance_proof_status: z
+      .union([InsuranceProofStatus, z.null()])
+      .optional(),
+    duplicate_check_status: z
+      .union([DuplicateCheckStatus, z.null()])
+      .optional(),
   })
-  .partial()
   .passthrough()
 const LeaseObjectEdit = z
   .object({
@@ -1382,6 +1886,14 @@ const LeaseObjectEdit = z
     dat_evidence_status: z.union([DATEvidenceStatus, z.null()]),
     dat_evidence_document_id: z.union([z.string(), z.null()]),
     location_and_region: z.union([z.string(), z.null()]),
+    object_location: z.union([ObjectLocation, z.null()]),
+    supplier_name: z.union([z.string(), z.null()]),
+    registration_part_two_status: z.union([
+      RegistrationPartTwoStatus,
+      z.null(),
+    ]),
+    insurance_proof_status: z.union([InsuranceProofStatus, z.null()]),
+    duplicate_check_status: z.union([DuplicateCheckStatus, z.null()]),
   })
   .partial()
   .passthrough()
@@ -1390,17 +1902,17 @@ const LeaseObjectRemove = z
   .passthrough()
 const RegisteredAddressInput = z
   .object({
-    street: z.string().min(1),
-    city: z.string().min(1),
-    postal_code: z.string().min(1),
+    street: z.string().min(2).max(50),
+    city: z.string().min(2).max(50),
     country: z.string().min(1),
+    postal_code: z.string().min(1),
     state_region: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const LegalEntityIdentityInput = z
   .object({
     partner_type: z.string(),
-    legal_name: z.string(),
+    legal_name: z.string().min(2).max(100),
     additional_name: z.union([z.string(), z.null()]).optional(),
     legal_form: z.union([z.string(), z.null()]).optional(),
     date_of_incorporation: z.union([z.string(), z.null()]).optional(),
@@ -1422,7 +1934,7 @@ const PersonIdentityInput = z
     first_name: z.union([z.string(), z.null()]).optional(),
     last_name: z.union([z.string(), z.null()]).optional(),
     date_of_birth: z.string(),
-    place_of_birth: z.string(),
+    place_of_birth: z.union([z.string(), z.null()]).optional(),
     country: z.string().min(2).max(2),
     birth_name: z.union([z.string(), z.null()]).optional(),
     national_id: z.union([z.string(), z.null()]).optional(),
@@ -1430,16 +1942,19 @@ const PersonIdentityInput = z
     creditreform_no: z.union([z.string(), z.null()]).optional(),
     schufa_no: z.union([z.string(), z.null()]).optional(),
     industry_code: z.union([z.string(), z.null()]).optional(),
+    tax_id_vat: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const SoleTraderIdentityInput = z
   .object({
     partner_type: z.string(),
-    full_name: z.string(),
-    date_of_birth: z.string(),
     legal_name: z.union([z.string(), z.null()]).optional(),
-    additional_name: z.union([z.string(), z.null()]).optional(),
     legal_form: z.union([z.string(), z.null()]).optional(),
+    first_name: z.union([z.string(), z.null()]).optional(),
+    last_name: z.union([z.string(), z.null()]).optional(),
+    full_name: z.union([z.string(), z.null()]).optional(),
+    date_of_birth: z.union([z.string(), z.null()]).optional(),
+    additional_name: z.union([z.string(), z.null()]).optional(),
     date_of_incorporation: z.union([z.string(), z.null()]).optional(),
     industry_code: z.union([z.string(), z.null()]).optional(),
     country: z.string().min(2).max(2),
@@ -1473,6 +1988,7 @@ const CandidateSummary = z
     status: z.string(),
     matched_anchors: z.array(z.string()),
     confidence: z.string(),
+    country: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const PartnerMatchResponse = z
@@ -1484,8 +2000,23 @@ const PartnerMatchResponse = z
     inputs_hash: z.string(),
   })
   .passthrough()
+const PartnerAddressInput = z
+  .object({
+    label: z.string().min(1),
+    street: z.string().min(2).max(50),
+    house_number: z.union([z.string(), z.null()]).optional(),
+    address_line_2: z.union([z.string(), z.null()]).optional(),
+    country: z.string().min(2).max(2),
+    postal_code: z.string().min(1),
+    city: z.string().min(2).max(50),
+    state_region: z.union([z.string(), z.null()]).optional(),
+    is_default: z.boolean().optional().default(false),
+  })
+  .passthrough()
 const LesseeCaptureRequest = z
   .object({
+    addresses: z.array(PartnerAddressInput).max(20),
+    dealer_numbers: z.array(z.string().regex(/^[0-9]{4}$/)).max(20),
     existing_partner_id: z.union([z.string(), z.null()]),
     identity: z.union([
       z.discriminatedUnion("partner_type", [
@@ -1496,6 +2027,8 @@ const LesseeCaptureRequest = z
       z.null(),
     ]),
     personennummer_os_plus: z.union([z.string(), z.null()]),
+    keep_both: z.boolean().default(false),
+    duplicate_note: z.union([z.string(), z.null()]),
   })
   .partial()
   .passthrough()
@@ -1532,6 +2065,8 @@ const LegalEntityIdentityDetail = z
     industry_code: z.union([z.string(), z.null()]),
     registered_address: z.union([RegisteredAddress, z.null()]),
     foreign_identifier: z.union([z.string(), z.null()]),
+    creditreform_no: z.union([z.string(), z.null()]).optional(),
+    schufa_no: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const PersonIdentityDetail = z
@@ -1540,20 +2075,23 @@ const PersonIdentityDetail = z
     full_name: z.string(),
     first_name: z.union([z.string(), z.null()]),
     last_name: z.union([z.string(), z.null()]),
-    date_of_birth: z.string(),
-    place_of_birth: z.string(),
+    date_of_birth: z.union([z.string(), z.null()]),
+    place_of_birth: z.union([z.string(), z.null()]),
     country: z.string(),
     birth_name: z.union([z.string(), z.null()]),
     national_id: z.union([z.string(), z.null()]),
     industry_code: z.union([z.string(), z.null()]),
     registered_address: z.union([RegisteredAddress, z.null()]),
+    creditreform_no: z.union([z.string(), z.null()]).optional(),
+    schufa_no: z.union([z.string(), z.null()]).optional(),
+    tax_id_vat: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const SoleTraderIdentityDetail = z
   .object({
     partner_type: z.string(),
     full_name: z.string(),
-    date_of_birth: z.string(),
+    date_of_birth: z.union([z.string(), z.null()]),
     legal_name: z.union([z.string(), z.null()]),
     additional_name: z.union([z.string(), z.null()]),
     legal_form: z.union([z.string(), z.null()]),
@@ -1563,8 +2101,13 @@ const SoleTraderIdentityDetail = z
     tax_id_vat: z.union([z.string(), z.null()]),
     commercial_register_no: z.union([z.string(), z.null()]),
     registered_address: z.union([RegisteredAddress, z.null()]),
+    creditreform_no: z.union([z.string(), z.null()]).optional(),
+    schufa_no: z.union([z.string(), z.null()]).optional(),
+    first_name: z.union([z.string(), z.null()]).optional(),
+    last_name: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
+const PartyDuplicateState = z.enum(["pending", "merged", "kept_apart", "none"])
 const PartnerDetailResponse = z
   .object({
     partner_id: z.string(),
@@ -1577,8 +2120,14 @@ const PartnerDetailResponse = z
       PersonIdentityDetail,
       SoleTraderIdentityDetail,
     ]),
+    personennummer_os_plus: z.union([z.string(), z.null()]).optional(),
     created_at: z.string().datetime({ offset: true }),
     updated_at: z.string().datetime({ offset: true }),
+    version: z.number().int(),
+    duplicate_state: z.union([PartyDuplicateState, z.null()]).optional(),
+    duplicate_pair_id: z.union([z.string(), z.null()]).optional(),
+    open_case_count: z.union([z.number(), z.null()]).optional(),
+    non_performing_contract_count: z.union([z.number(), z.null()]).optional(),
   })
   .passthrough()
 const LesseeUnlinkResponse = z
@@ -1652,12 +2201,21 @@ const ContractCollateralType = z.enum([
   "GUARANTEE",
   "SECURITY_DEPOSIT",
   "BUY_BACK_AGREEMENT",
+  "BANK_GUARANTEE",
+  "CHATTEL_MORTGAGE",
+  "RESIDUAL_VALUE_GUARANTEE",
+  "LAND_CHARGE",
+  "OTHER",
 ])
-const ObligationKind = z.enum(["guarantee", "co_obligation"])
 const CollateralAddRequest = z
   .object({
+    addresses: z.array(PartnerAddressInput).max(20).optional(),
+    dealer_numbers: z
+      .array(z.string().regex(/^[0-9]{4}$/))
+      .max(20)
+      .optional(),
     collateral_type: ContractCollateralType,
-    value: z.union([z.number(), z.string(), z.null()]).optional(),
+    value: z.union([z.number(), z.string()]),
     evidence_document_id: z.union([z.string(), z.null()]).optional(),
     existing_partner_id: z.union([z.string(), z.null()]).optional(),
     identity: z
@@ -1670,7 +2228,14 @@ const CollateralAddRequest = z
         z.null(),
       ])
       .optional(),
-    kind_of_obligation: z.union([ObligationKind, z.null()]).optional(),
+    provider_name: z.union([z.string(), z.null()]).optional(),
+    provider_street: z.union([z.string(), z.null()]).optional(),
+    provider_house_number: z.union([z.string(), z.null()]).optional(),
+    provider_postal_code: z.union([z.string(), z.null()]).optional(),
+    provider_city: z.union([z.string(), z.null()]).optional(),
+    keep_both: z.boolean().optional().default(false),
+    duplicate_note: z.union([z.string(), z.null()]).optional(),
+    personennummer_os_plus: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const app__modules__contracts__interfaces__http__schemas__collateral_schemas__CollateralResponse =
@@ -1683,6 +2248,7 @@ const app__modules__contracts__interfaces__http__schemas__collateral_schemas__Co
       guarantor_partner_id: z.union([z.string(), z.null()]),
       evidence_document_id: z.union([z.string(), z.null()]),
       kind_of_obligation: z.union([z.string(), z.null()]),
+      provider: z.union([CollateralProvider, z.null()]),
     })
     .passthrough()
 const CollateralListItem = z
@@ -1695,6 +2261,7 @@ const CollateralListItem = z
     evidence_document_id: z.union([z.string(), z.null()]),
     evidence_document_name: z.union([z.string(), z.null()]),
     evidence_document_date: z.union([z.string(), z.null()]),
+    provider: z.union([CollateralProvider, z.null()]),
     kind_of_obligation: z.union([z.string(), z.null()]),
   })
   .passthrough()
@@ -1706,7 +2273,61 @@ const CollateralListResponse = z
   })
   .passthrough()
 const CollateralRemoveRequest = z
-  .object({ reason: z.string().min(1).max(255) })
+  .object({ reason: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough()
+const Body_download_milk_error_report_api_v1_cases__case_id__contracts_milk_error_report_post =
+  z.object({ file: z.string() }).passthrough()
+const Body_validate_milk_delivery_api_v1_cases__case_id__contracts_milk_validate_post =
+  z.object({ file: z.string() }).passthrough()
+const MilkFindingItem = z
+  .object({
+    severity: z.string(),
+    layer: z.string(),
+    rule_reference: z.string(),
+    sheet: z.string(),
+    row: z.union([z.number(), z.null()]),
+    field_heading: z.string(),
+    delivered: z.string(),
+    message: z.string(),
+    accepted: z.array(z.string()),
+    contract_number: z.string(),
+  })
+  .passthrough()
+const MilkContractItem = z
+  .object({
+    row: z.number().int(),
+    contract_number: z.string(),
+    lessee_name: z.string(),
+    contract_type: z.string(),
+    term_months: z.union([z.number(), z.null()]),
+    object_count: z.number().int(),
+  })
+  .passthrough()
+const MilkValidationResponse = z
+  .object({
+    accepted: z.boolean(),
+    rows_checked: z.number().int(),
+    contracts_delivered: z.number().int(),
+    error_count: z.number().int(),
+    warning_count: z.number().int(),
+    failed_row_count: z.number().int(),
+    rows_that_passed: z.number().int(),
+    errors: z.array(MilkFindingItem),
+    warnings: z.array(MilkFindingItem),
+    contracts: z.array(MilkContractItem),
+  })
+  .passthrough()
+const Body_import_milk_delivery_api_v1_cases__case_id__contracts_milk_import_post =
+  z.object({ file: z.string() }).passthrough()
+const MilkImportResponse = z
+  .object({
+    contracts_created: z.number().int(),
+    objects_created: z.number().int(),
+    plans_created: z.number().int(),
+    collaterals_created: z.number().int(),
+    guarantees_not_written: z.number().int(),
+  })
   .passthrough()
 const Body_upload_contract_import_api_v1_cases__case_id__contracts_import_post =
   z.object({ file: z.string() }).passthrough()
@@ -1723,6 +2344,8 @@ const ImportBatchResponse = z
     created_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
+const ImportRowStatus = z.enum(["valid", "rejected", "committed"])
+const status__3 = z.union([z.array(ImportRowStatus), z.null()]).optional()
 const ImportRowItem = z
   .object({
     row_number: z.number().int(),
@@ -1756,7 +2379,7 @@ const ImportCommitResponse = z
     remaining_failed: z.number().int(),
   })
   .passthrough()
-const deferred_state = z.union([ContractDeferredState, z.null()]).optional()
+const contract_status = z.union([ContractStatus, z.null()]).optional()
 const ContractWorkSurfaceItem = z
   .object({
     id: z.string().uuid(),
@@ -1773,6 +2396,9 @@ const ContractWorkSurfaceItem = z
     contract_residual: z.union([z.string(), z.null()]),
     deferred_state: ContractDeferredState,
     contract_status: ContractStatus,
+    first_object_description: z.union([z.string(), z.null()]).optional(),
+    first_object_plate: z.union([z.string(), z.null()]).optional(),
+    financing_reference: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const ContractWorkSurfaceResponse = z
@@ -1785,6 +2411,39 @@ const UpdateMeRequest = z
     phone_number: z.union([z.string(), z.null()]),
   })
   .partial()
+  .passthrough()
+const app__modules__users__interfaces__http__schemas__user_schemas__UserRef = z
+  .object({ id: z.string(), name: z.string() })
+  .passthrough()
+const UserDetailResponse = z
+  .object({
+    id: z.string().uuid(),
+    user_id: z.string(),
+    first_name: z.string(),
+    last_name: z.string(),
+    email: z.string().email(),
+    role: UserRole,
+    status: UserStatus,
+    tenant_id: z.union([z.string(), z.null()]),
+    tenant_name: z.union([z.string(), z.null()]),
+    lc_partner_id: z.union([z.string(), z.null()]).optional(),
+    phone_number: z.union([z.string(), z.null()]),
+    pending_email: z.union([z.string(), z.null()]),
+    profile_picture_url: z.union([z.string(), z.null()]),
+    access_valid_until: z.union([z.string(), z.null()]),
+    invited_by: z.union([
+      app__modules__users__interfaces__http__schemas__user_schemas__UserRef,
+      z.null(),
+    ]),
+    approved_by: z.union([
+      app__modules__users__interfaces__http__schemas__user_schemas__UserRef,
+      z.null(),
+    ]),
+    invited_at: z.union([z.string(), z.null()]),
+    activated_at: z.union([z.string(), z.null()]),
+    last_login: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+  })
   .passthrough()
 const UserMePermissionsResponse = z
   .object({
@@ -1866,39 +2525,6 @@ const InviteUserRequest = z
     lc_partner_id: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
-const app__modules__users__interfaces__http__schemas__user_schemas__UserRef = z
-  .object({ id: z.string(), name: z.string() })
-  .passthrough()
-const UserDetailResponse = z
-  .object({
-    id: z.string().uuid(),
-    user_id: z.string(),
-    first_name: z.string(),
-    last_name: z.string(),
-    email: z.string().email(),
-    role: UserRole,
-    status: UserStatus,
-    tenant_id: z.union([z.string(), z.null()]),
-    tenant_name: z.union([z.string(), z.null()]),
-    lc_partner_id: z.union([z.string(), z.null()]).optional(),
-    phone_number: z.union([z.string(), z.null()]),
-    pending_email: z.union([z.string(), z.null()]),
-    profile_picture_url: z.union([z.string(), z.null()]),
-    access_valid_until: z.union([z.string(), z.null()]),
-    invited_by: z.union([
-      app__modules__users__interfaces__http__schemas__user_schemas__UserRef,
-      z.null(),
-    ]),
-    approved_by: z.union([
-      app__modules__users__interfaces__http__schemas__user_schemas__UserRef,
-      z.null(),
-    ]),
-    invited_at: z.union([z.string(), z.null()]),
-    activated_at: z.union([z.string(), z.null()]),
-    last_login: z.union([z.string(), z.null()]),
-    created_at: z.string().datetime({ offset: true }),
-  })
-  .passthrough()
 const EditUserRequest = z
   .object({
     first_name: z.union([z.string(), z.null()]),
@@ -1909,6 +2535,51 @@ const EditUserRequest = z
   .passthrough()
 const ChangeEmailRequest = z
   .object({ new_email: z.string().email() })
+  .passthrough()
+const GovernedActionType = z.enum([
+  "tenant_create",
+  "tenant_suspend",
+  "tenant_reactivate",
+  "tenant_archive",
+  "user_platform_invite",
+  "user_role_change",
+  "user_auditor_period_update",
+  "user_email_change",
+  "module_activate",
+  "partner_archive",
+  "partner_confirm",
+  "partner_role_assign",
+  "partner_identity_change",
+  "partner_merge",
+  "financing_approval_condition_waive",
+  "financing_run_out",
+  "case_reactivate",
+])
+const GovernedActionResponse = z
+  .object({
+    id: z.string().uuid(),
+    action_type: GovernedActionType,
+    subject_type: z.string(),
+    subject_id: z.union([z.string(), z.null()]),
+    tenant_id: z.union([z.string(), z.null()]),
+    status: GovernedActionStatus,
+    initiator_id: z.string().uuid(),
+    approver_id: z.union([z.string(), z.null()]),
+    display_snapshot: z.object({}).partial().passthrough(),
+    initiator_snapshot: z.object({}).partial().passthrough(),
+    approver_snapshot: z.union([
+      z.object({}).partial().passthrough(),
+      z.null(),
+    ]),
+    execution_params: z.object({}).partial().passthrough(),
+    reason: z.union([z.string(), z.null()]),
+    approver_comment: z.union([z.string(), z.null()]),
+    expires_at: z.union([z.string(), z.null()]),
+    resolved_at: z.union([z.string(), z.null()]),
+    correlation_id: z.union([z.string(), z.null()]),
+    created_at: z.string().datetime({ offset: true }),
+    updated_at: z.string().datetime({ offset: true }),
+  })
   .passthrough()
 const ResendReason = z.enum([
   "invitation_expired",
@@ -2251,6 +2922,8 @@ const SubjectType = z.enum([
   "TENANT",
   "PARTNER",
   "FINANCING_APPROVAL_CONDITION",
+  "FINANCING",
+  "CASE",
 ])
 const subject_type = z.union([z.array(SubjectType), z.null()]).optional()
 const PaginatedGovernedActionsResponse = z
@@ -2345,48 +3018,64 @@ const AuditEventResponse = z
     recorded_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
-const DuplicateResolutionReasonCode = z.enum([
-  "identical_registry_identifiers",
-  "same_legal_entity_different_name",
-  "data_entry_error",
-  "system_import_error",
-  "legal_restructuring",
-  "confirmed_different_entities",
-  "subsidiary_not_duplicate",
-  "insufficient_evidence",
-])
-const ResolveDuplicatePairRequest = z
+const MatchingEvidenceItem = z
   .object({
-    decision: z.enum(["confirmed_duplicate", "confirmed_distinct", "deferred"]),
-    reason_code: DuplicateResolutionReasonCode,
-    note: z.union([z.string(), z.null()]).optional(),
+    anchor: z.string(),
+    a_value: z.unknown(),
+    b_value: z.unknown(),
+    match: z.boolean(),
   })
   .passthrough()
-const ResolveDuplicatePairResponse = z
-  .object({ pair_id: z.string(), status: z.string() })
-  .passthrough()
-const MergeReasonCode = z.enum([
-  "same_legal_entity_different_name",
-  "identical_registry_identifiers",
-  "data_entry_error",
-  "system_import_error",
-  "legal_restructuring",
-])
-const MergeInitiateRequest = z
+const DuplicateCandidatePairResponse = z
   .object({
-    pair_id: z.string().uuid(),
-    survivor_partner_id: z.string().uuid(),
-    merge_reason_code: MergeReasonCode,
-    note: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const MergeInitiateResponse = z
-  .object({
-    governed_action_id: z.string(),
-    source_partner_id: z.string(),
-    target_partner_id: z.string(),
     pair_id: z.string(),
+    tenant_id: z.string(),
+    partner_a_id: z.string(),
+    partner_b_id: z.string(),
+    confidence: z.string(),
+    matching_evidence: z.array(MatchingEvidenceItem),
     status: z.string(),
+    detected_at: z.string().datetime({ offset: true }),
+    resolved_by: z.union([z.string(), z.null()]),
+    resolved_at: z.union([z.string(), z.null()]),
+    reason_code: z.union([z.string(), z.null()]),
+    resolution_note: z.union([z.string(), z.null()]),
+    matched_anchor: z.union([z.string(), z.null()]).optional(),
+    matched_value: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const PairSideRoleResponse = z
+  .object({
+    role: z.string(),
+    case_id: z.string().uuid(),
+    case_reference: z.string(),
+  })
+  .passthrough()
+const PairSideResponse = z
+  .object({
+    partner_id: z.string().uuid(),
+    display_name: z.string(),
+    partner_status: z.string(),
+    roles: z.array(PairSideRoleResponse),
+  })
+  .passthrough()
+const DuplicatePairResolutionResponse = z
+  .object({
+    pair: DuplicateCandidatePairResponse,
+    sides: z.array(PairSideResponse),
+  })
+  .passthrough()
+const DuplicateKeepApartRequest = z
+  .object({ note: z.union([z.string(), z.null()]) })
+  .partial()
+  .passthrough()
+const DuplicateResolutionResultResponse = z
+  .object({ pair_id: z.string().uuid(), status: z.string() })
+  .passthrough()
+const DuplicateMergeRequest = z
+  .object({
+    survivor_partner_id: z.string().uuid(),
+    note: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const AssessmentAttributeResponse = z
@@ -2432,6 +3121,44 @@ const PartnerSubmitResponse = z
     country: z.union([z.string(), z.null()]).optional(),
     tax_id_vat: z.union([z.string(), z.null()]).optional(),
     commercial_register_no: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const PartyAddressUpdate = z
+  .object({
+    label: z.string().min(1),
+    street: z.string().min(2).max(50),
+    house_number: z.union([z.string(), z.null()]).optional(),
+    address_line_2: z.union([z.string(), z.null()]).optional(),
+    country: z.string().min(2).max(2),
+    postal_code: z.string().min(1),
+    city: z.string().min(2).max(50),
+    state_region: z.union([z.string(), z.null()]).optional(),
+    is_default: z.boolean().optional().default(false),
+    id: z.string().uuid(),
+  })
+  .passthrough()
+const PartyEditRequest = z
+  .object({
+    version: z.number().int().gte(1),
+    identity: z.discriminatedUnion("partner_type", [
+      LegalEntityIdentityInput,
+      PersonIdentityInput,
+      SoleTraderIdentityInput,
+    ]),
+    personennummer_os_plus: z.union([z.string(), z.null()]).optional(),
+    dealer_numbers: z
+      .array(z.string().regex(/^[0-9]{4}$/))
+      .max(20)
+      .optional(),
+    addresses_added: z.array(PartnerAddressInput).max(20).optional(),
+    addresses_updated: z.array(PartyAddressUpdate).max(20).optional(),
+    addresses_retired: z.array(z.string().uuid()).max(20).optional(),
+  })
+  .passthrough()
+const OsPlusEditRequest = z
+  .object({
+    version: z.number().int().gte(1),
+    personennummer_os_plus: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const ResolutionEventSummary = z
@@ -2531,19 +3258,6 @@ const PartnerRelationshipCreateRequest = z
     valid_to: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
-const PartnerDocumentItem = z
-  .object({
-    id: z.string(),
-    media_object_id: z.string(),
-    file_name: z.union([z.string(), z.null()]),
-    document_type_code: z.union([z.string(), z.null()]),
-    document_type_name: z.union([z.string(), z.null()]),
-    document_date: z.union([z.string(), z.null()]),
-    label: z.union([z.string(), z.null()]),
-    uploaded_at: z.string().datetime({ offset: true }),
-    uploaded_by_name: z.union([z.string(), z.null()]),
-  })
-  .passthrough()
 const PartnerDocumentsResponse = z
   .object({ partner_id: z.string(), items: z.array(PartnerDocumentItem) })
   .passthrough()
@@ -2595,6 +3309,13 @@ const LcNumberListResponse = z
 const LcNumberCreateRequest = z
   .object({ lc_number: z.string().regex(/^[0-9]{4}$/) })
   .passthrough()
+const AffectedAgreementItem = z
+  .object({
+    framework_agreement_id: z.string(),
+    agreement_name: z.string(),
+    functions: z.array(z.string()),
+  })
+  .passthrough()
 const BankAccountResponse = z
   .object({
     id: z.string(),
@@ -2607,6 +3328,7 @@ const BankAccountResponse = z
     status: z.string(),
     created_at: z.string().datetime({ offset: true }),
     closed_at: z.union([z.string(), z.null()]),
+    used_by: z.array(AffectedAgreementItem).optional(),
   })
   .passthrough()
 const BankAccountListResponse = z
@@ -2619,13 +3341,6 @@ const BankAccountCreateRequest = z
     holder_name: z.union([z.string(), z.null()]).optional(),
     bank_name: z.union([z.string(), z.null()]).optional(),
     bic: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
-const AffectedAgreementItem = z
-  .object({
-    framework_agreement_id: z.string(),
-    agreement_name: z.string(),
-    functions: z.array(z.string()),
   })
   .passthrough()
 const BankAccountCloseResponse = z
@@ -2652,19 +3367,6 @@ const PartnerAddressResponse = z
   .passthrough()
 const PartnerAddressListResponse = z
   .object({ items: z.array(PartnerAddressResponse) })
-  .passthrough()
-const PartnerAddressInput = z
-  .object({
-    label: z.string().min(1),
-    street: z.string().min(1),
-    house_number: z.union([z.string(), z.null()]).optional(),
-    address_line_2: z.union([z.string(), z.null()]).optional(),
-    postal_code: z.string().min(1),
-    city: z.string().min(1),
-    state_region: z.union([z.string(), z.null()]).optional(),
-    country: z.string().min(2).max(2),
-    is_default: z.boolean().optional().default(false),
-  })
   .passthrough()
 const ConfirmationHistoryEntry = z
   .object({
@@ -2793,10 +3495,10 @@ const MergeLineageRecordResponse = z
     record_id: z.string(),
     source_partner_id: z.string(),
     target_partner_id: z.string(),
-    governed_action_id: z.string(),
+    governed_action_id: z.union([z.string(), z.null()]),
     executed_by: z.string(),
     executed_at: z.string().datetime({ offset: true }),
-    merge_reason_code: z.string(),
+    merge_reason_code: z.union([z.string(), z.null()]),
     reference_manifest: z.object({}).partial().passthrough(),
   })
   .passthrough()
@@ -2832,6 +3534,7 @@ const AssessmentResponse = z
     cancelled_at: z.union([z.string(), z.null()]),
     cancel_reason: z.union([z.string(), z.null()]),
     created_by: z.string(),
+    created_by_name: z.union([z.string(), z.null()]).optional(),
     created_at: z.string().datetime({ offset: true }),
     values: z.array(AssessmentValueResponse),
   })
@@ -2871,6 +3574,30 @@ const PartnerMatchRequest = z
     ]),
   })
   .passthrough()
+const PartnerCaptureRequest = z
+  .object({
+    addresses: z.array(PartnerAddressInput).max(20).optional(),
+    dealer_numbers: z
+      .array(z.string().regex(/^[0-9]{4}$/))
+      .max(20)
+      .optional(),
+    identity: z.discriminatedUnion("partner_type", [
+      LegalEntityIdentityInput,
+      PersonIdentityInput,
+      SoleTraderIdentityInput,
+    ]),
+    personennummer_os_plus: z.union([z.string(), z.null()]).optional(),
+    keep_both: z.boolean().optional().default(false),
+    duplicate_note: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
+const PartnerCaptureResponse = z
+  .object({
+    partner_id: z.string().uuid(),
+    is_new: z.boolean(),
+    partner_status: z.string(),
+  })
+  .passthrough()
 const PartnerStatus = z.enum([
   "draft",
   "pending_confirmation",
@@ -2880,7 +3607,12 @@ const PartnerStatus = z.enum([
   "archived",
   "pending_archive",
 ])
-const PartnerRole = z.enum(["lessee", "guarantor", "supplier"])
+const RegistryRole = z.enum([
+  "leasing_company",
+  "lessee",
+  "guarantor",
+  "supplier",
+])
 const PartnerListItem = z
   .object({
     partner_id: z.string(),
@@ -2891,6 +3623,14 @@ const PartnerListItem = z
     ubo_completeness_status: UboCompletenessStatus,
     roles: z.array(z.string()),
     registered_address: z.union([RegisteredAddress, z.null()]).optional(),
+    registry_id: z.string(),
+    legal_form: z.union([z.string(), z.null()]).optional(),
+    creditreform_no: z.union([z.string(), z.null()]).optional(),
+    schufa_no: z.union([z.string(), z.null()]).optional(),
+    os_plus_no: z.union([z.string(), z.null()]).optional(),
+    dealer_numbers: z.array(z.string()).optional(),
+    contracts_count: z.number().int().optional().default(0),
+    registry_roles: z.array(RegistryRole).optional(),
   })
   .passthrough()
 const PartnerListResponse = z
@@ -2899,30 +3639,6 @@ const PartnerListResponse = z
     total: z.number().int(),
     limit: z.number().int(),
     offset: z.number().int(),
-  })
-  .passthrough()
-const MatchingEvidenceItem = z
-  .object({
-    anchor: z.string(),
-    a_value: z.unknown(),
-    b_value: z.unknown(),
-    match: z.boolean(),
-  })
-  .passthrough()
-const DuplicateCandidatePairResponse = z
-  .object({
-    pair_id: z.string(),
-    tenant_id: z.string(),
-    partner_a_id: z.string(),
-    partner_b_id: z.string(),
-    confidence: z.string(),
-    matching_evidence: z.array(MatchingEvidenceItem),
-    status: z.string(),
-    detected_at: z.string().datetime({ offset: true }),
-    resolved_by: z.union([z.string(), z.null()]),
-    resolved_at: z.union([z.string(), z.null()]),
-    reason_code: z.union([z.string(), z.null()]),
-    resolution_note: z.union([z.string(), z.null()]),
   })
   .passthrough()
 const DuplicatePairListResponse = z
@@ -3339,6 +4055,8 @@ const FAListItemResponse = z
     vfe_amount_eur: z.union([z.string(), z.null()]).optional(),
     max_volume_eur: z.union([z.string(), z.null()]).optional(),
     template_count: z.number().int().optional().default(0),
+    committed_eur: z.union([z.string(), z.null()]).optional(),
+    committed_request_count: z.union([z.number(), z.null()]).optional(),
   })
   .passthrough()
 const FAListResponse = z
@@ -3382,7 +4100,7 @@ const FADetailResponse = z
     status: FALifecycleStatus,
     agreement_lifecycle: FAAgreementLifecycle,
     currency: z.string(),
-    max_volume_eur: z.string().regex(/^(?!^[-+.]*$)[+-]?0*\d*\.?\d*$/),
+    max_volume_eur: z.union([z.string(), z.null()]),
     refi_loan_value_date: z.union([RefiLoanValueDateRule, z.null()]),
     refi_instalment_due_date: z.union([z.number(), z.null()]),
     valid_from: z.string(),
@@ -3484,6 +4202,8 @@ const FALCPartnersResponse = z
 const FAUtilizationResponse = z
   .object({
     max_volume_eur: z.union([z.string(), z.null()]),
+    committed_eur: z.union([z.string(), z.null()]),
+    committed_request_count: z.union([z.number(), z.null()]),
     disbursed_volume_eur: z.union([z.string(), z.null()]),
     redeemed_volume_eur: z.union([z.string(), z.null()]),
     net_exposure_eur: z.union([z.string(), z.null()]),
@@ -3497,8 +4217,24 @@ const FAUtilizationResponse = z
   })
   .partial()
   .passthrough()
+const FALinkedFinancingItem = z
+  .object({
+    id: z.string().uuid(),
+    financing_reference: z.string(),
+    kind: FinancingKind,
+    contract_count: z.number().int(),
+    payout_amount: z.union([z.string(), z.null()]),
+    status: FinancingStatus,
+    ended_reason: z.union([FinancingEndedReason, z.null()]).optional(),
+  })
+  .passthrough()
 const FALinkedFinancingsResponse = z
-  .object({ count: z.number().int().default(0), items: z.array(z.unknown()) })
+  .object({
+    count: z.number().int().default(0),
+    items: z.array(FALinkedFinancingItem),
+    page: z.number().int().default(1),
+    per_page: z.number().int().default(25),
+  })
   .partial()
   .passthrough()
 const FAPricingSnapshotResponse = z
@@ -3635,7 +4371,6 @@ const LCPortalFAListItem = z
     status: FALifecycleStatus,
     valid_from: z.string(),
     valid_until: z.union([z.string(), z.null()]),
-    max_volume_eur: z.union([z.string(), z.null()]).optional(),
     available_volume_eur: z.union([z.string(), z.null()]).optional(),
     new_financings_available: z.union([z.boolean(), z.null()]).optional(),
     product_templates: z.array(LCPortalProductTemplateItem),
@@ -3846,6 +4581,7 @@ const TaskDefinitionItem = z
     catalog_version_id: z.string().uuid(),
     layer_action: LayerAction,
     task_number: z.union([z.number(), z.null()]),
+    task_number_suffix: z.union([z.string(), z.null()]).optional(),
     task_code: z.union([z.string(), z.null()]),
     task_name: z.union([z.string(), z.null()]),
     task_description: z.union([z.string(), z.null()]),
@@ -3871,6 +4607,8 @@ const TaskDefinitionItem = z
     four_eyes_exclusion_wide: z.boolean(),
     is_decision_step: z.boolean(),
     is_no_way_back: z.boolean(),
+    lists_open_duplicates: z.boolean(),
+    blocked_by_open_duplicates: z.boolean(),
     completion_case_status_target: z.union([z.string(), z.null()]),
     completion_entity_targets: z.union([
       z.object({}).partial().passthrough(),
@@ -3977,6 +4715,8 @@ const AddTaskRequest = z
     four_eyes_exclusion_wide: z.boolean().optional().default(false),
     is_decision_step: z.boolean().optional().default(false),
     is_no_way_back: z.boolean().optional().default(false),
+    lists_open_duplicates: z.boolean().optional().default(false),
+    blocked_by_open_duplicates: z.boolean().optional().default(false),
     completion_case_status_target: z.union([z.string(), z.null()]).optional(),
     completion_entity_targets: z
       .union([z.object({}).partial().passthrough(), z.null()])
@@ -3995,6 +4735,7 @@ const TaskResponseWithWarnings = z
     catalog_version_id: z.string().uuid(),
     layer_action: LayerAction,
     task_number: z.union([z.number(), z.null()]),
+    task_number_suffix: z.union([z.string(), z.null()]).optional(),
     task_code: z.union([z.string(), z.null()]),
     task_name: z.union([z.string(), z.null()]),
     task_description: z.union([z.string(), z.null()]),
@@ -4020,6 +4761,8 @@ const TaskResponseWithWarnings = z
     four_eyes_exclusion_wide: z.boolean(),
     is_decision_step: z.boolean(),
     is_no_way_back: z.boolean(),
+    lists_open_duplicates: z.boolean(),
+    blocked_by_open_duplicates: z.boolean(),
     completion_case_status_target: z.union([z.string(), z.null()]),
     completion_entity_targets: z.union([
       z.object({}).partial().passthrough(),
@@ -4049,6 +4792,7 @@ const TaskResponse = z
     catalog_version_id: z.string().uuid(),
     layer_action: LayerAction,
     task_number: z.union([z.number(), z.null()]),
+    task_number_suffix: z.union([z.string(), z.null()]).optional(),
     task_code: z.union([z.string(), z.null()]),
     task_name: z.union([z.string(), z.null()]),
     task_description: z.union([z.string(), z.null()]),
@@ -4074,6 +4818,8 @@ const TaskResponse = z
     four_eyes_exclusion_wide: z.boolean(),
     is_decision_step: z.boolean(),
     is_no_way_back: z.boolean(),
+    lists_open_duplicates: z.boolean(),
+    blocked_by_open_duplicates: z.boolean(),
     completion_case_status_target: z.union([z.string(), z.null()]),
     completion_entity_targets: z.union([
       z.object({}).partial().passthrough(),
@@ -4126,6 +4872,8 @@ const UpdateTaskRequest = z
     four_eyes_exclusion_wide: z.union([z.boolean(), z.null()]),
     is_decision_step: z.union([z.boolean(), z.null()]),
     is_no_way_back: z.union([z.boolean(), z.null()]),
+    lists_open_duplicates: z.union([z.boolean(), z.null()]),
+    blocked_by_open_duplicates: z.union([z.boolean(), z.null()]),
     completion_case_status_target: z.union([z.string(), z.null()]),
     completion_entity_targets: z.union([
       z.object({}).partial().passthrough(),
@@ -4214,6 +4962,7 @@ const ChecklistItemResponse = z
     phase_name: z.union([z.string(), z.null()]).optional(),
     phase_position: z.union([z.number(), z.null()]).optional(),
     task_number: z.union([z.number(), z.null()]).optional(),
+    task_number_suffix: z.union([z.string(), z.null()]).optional(),
     stage_categorization: z
       .union([
         app__modules__workflow_task_catalog__domain__enums__StageCategorization,
@@ -4232,6 +4981,8 @@ const ChecklistItemResponse = z
       .optional(),
     is_decision_step: z.boolean().optional().default(false),
     is_no_way_back: z.boolean().optional().default(false),
+    lists_open_duplicates: z.boolean().optional().default(false),
+    blocked_by_open_duplicates: z.boolean().optional().default(false),
     completion_case_status_target: z.union([z.string(), z.null()]).optional(),
     completion_entity_targets: z
       .union([z.record(z.string(), z.string()), z.null()])
@@ -4486,6 +5237,17 @@ const MaterializationResponse = z
     total: z.number().int(),
   })
   .passthrough()
+const DocumentRoleScope = z.enum(["lessee", "guarantor", "case"])
+const LcFileUploader = z.enum(["leasing_company", "bank"])
+const LCObligationFile = z
+  .object({
+    file_name: z.union([z.string(), z.null()]).optional(),
+    uploaded_at_utc: z.string().datetime({ offset: true }),
+    uploaded_at_local: z.string().datetime({ offset: true }),
+    uploaded_by: LcFileUploader,
+    rejection_reason: z.union([z.string(), z.null()]).optional(),
+  })
+  .passthrough()
 const LCObligationItem = z
   .object({
     requirement_definition_id: z.union([z.string(), z.null()]).optional(),
@@ -4495,6 +5257,9 @@ const LCObligationItem = z
     action_needed: z.boolean(),
     document_origin: z.string().optional().default(""),
     linked_document_id: z.union([z.string(), z.null()]).optional(),
+    party: DocumentRoleScope.optional(),
+    files: z.array(LCObligationFile).optional().default([]),
+    file_count: z.number().int().optional().default(0),
   })
   .passthrough()
 const LCObligationResponse = z
@@ -4528,15 +5293,6 @@ const FulfilmentResponse = z
     created_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
-const TransitionStatusRequest = z
-  .object({
-    requirement_definition_id: z.string().uuid(),
-    business_object_id: z.string().uuid(),
-    business_object_type: z.string(),
-    new_status: z.string(),
-    transition_reason: z.union([z.string(), z.null()]).optional(),
-  })
-  .passthrough()
 const PerRequirementStatusResponse = z
   .object({
     requirement_definition_id: z.union([z.string(), z.null()]).optional(),
@@ -4568,6 +5324,8 @@ const CaseDocumentFile = z
     file_name: z.union([z.string(), z.null()]),
     uploaded_at_utc: z.string().datetime({ offset: true }),
     uploaded_at_local: z.string().datetime({ offset: true }),
+    review_status: z.string(),
+    rejection_reason: z.union([z.string(), z.null()]).optional(),
   })
   .passthrough()
 const CaseDocumentRow = z
@@ -4587,20 +5345,23 @@ const CaseDocumentListResponse = z
   .object({ case_id: z.string().uuid(), documents: z.array(CaseDocumentRow) })
   .passthrough()
 const RejectDocumentRequest = z
-  .object({ reason: z.union([z.string(), z.null()]) })
-  .partial()
+  .object({ reason: z.string().min(1).max(255) })
   .passthrough()
-const MiscDocumentResponse = z
+const MergeSourceResponse = z
   .object({
-    id: z.string().uuid(),
     document_id: z.string().uuid(),
     file_name: z.union([z.string(), z.null()]),
-    size: z.union([z.number(), z.null()]),
-    document_type_code: z.union([z.string(), z.null()]),
-    document_label: z.union([z.string(), z.null()]),
-    uploaded_at_utc: z.string().datetime({ offset: true }),
-    uploaded_at_local: z.string().datetime({ offset: true }),
+    group: z.string(),
+    label: z.union([z.string(), z.null()]),
+    is_pdf: z.boolean(),
   })
+  .passthrough()
+const MergeSourcesResponse = z
+  .object({ case_id: z.string().uuid(), sources: z.array(MergeSourceResponse) })
+  .passthrough()
+const MergeDocumentsRequest = z
+  .object({ document_ids: z.array(z.string().uuid()).max(500) })
+  .partial()
   .passthrough()
 const MiscDocumentListResponse = z
   .object({
@@ -4641,7 +5402,6 @@ const GeneratedDocumentListResponse = z
   .passthrough()
 const Body_upload_calculation_data_sheet_api_v1_cases__case_id__generated_documents_calculation_data_sheet_post =
   z.object({ file: z.string() }).passthrough()
-const DocumentRoleScope = z.enum(["lessee", "guarantor", "case"])
 const DocumentTypeOrigin = z.enum(["requested", "generated"])
 const CreateDocumentTypeRequest = z
   .object({
@@ -4665,7 +5425,7 @@ const DocumentTypeResponse = z
     updated_at: z.string().datetime({ offset: true }),
   })
   .passthrough()
-const origin__2 = z.union([DocumentTypeOrigin, z.null()]).optional()
+const origin = z.union([DocumentTypeOrigin, z.null()]).optional()
 const role_scope = z.union([DocumentRoleScope, z.null()]).optional()
 const DocumentTypeListResponse = z
   .object({ items: z.array(DocumentTypeResponse), total: z.number().int() })
@@ -4689,6 +5449,12 @@ const DocumentTypeMatrixRow = z
   .passthrough()
 const DocumentTypeMatrixResponse = z
   .object({ rows: z.array(DocumentTypeMatrixRow), total: z.number().int() })
+  .passthrough()
+const IndustryClassResponse = z
+  .object({ code: z.string(), de: z.string(), en: z.string() })
+  .passthrough()
+const Wz2008Response = z
+  .object({ items: z.array(IndustryClassResponse) })
   .passthrough()
 const TestSessionRequest = z.object({ email: z.string().email() }).passthrough()
 const OTPResponse = z
@@ -4731,15 +5497,15 @@ export const schemas = {
   CaseOrigin,
   CaseListItem,
   DashboardResponse,
-  FollowUpEvent,
-  StartFollowUpRequest,
-  CaseResponse,
+  CaseLeasingCompanyOption,
+  CaseLeasingCompaniesResponse,
+  LeasingCompanyResolutionResponse,
   StartCaseRequest,
+  CaseResponse,
   case_type,
   status,
   assignee_id,
   waiting_on_role,
-  origin,
   CaseListResponse,
   AssignCaseRequest,
   DecideRequestRequest,
@@ -4747,10 +5513,6 @@ export const schemas = {
   CaseLeasingCompanyResponse,
   CaseProductTemplateResponse,
   ReviewContractItem,
-  CollateralType,
-  CollateralRecheckState,
-  CollateralValueItem,
-  app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
   ReviewFinancingSummary,
   CaseReviewResponse,
   CaseDataFinancingBlock,
@@ -4758,106 +5520,177 @@ export const schemas = {
   RecordDeviationRequest,
   DeviationResponse,
   DeviationListResponse,
-  DocumentToSendItem,
-  DocumentsToSendResponse,
-  DispatchResponse,
-  CorrespondenceKind,
-  RecordCorrespondenceRequest,
-  CorrespondenceResponse,
-  CorrespondenceListResponse,
+  CancelCaseRequest,
+  GovernedActionStatus,
+  PendingApprovalResponse,
   BindLeasingCompanyRequest,
   BindProductTemplateRequest,
   CaseDetailResponse,
+  CaseActivityChange,
   CaseActivityItem,
   CaseActivityResponse,
-  SetCollateralTypeRequest,
-  SetCollateralTotalRequest,
-  SetCollateralEvidenceRequest,
   RedemptionStatus,
   RedemptionListItem,
   RedemptionListResponse,
   RedemptionCaptureRequest,
   RedemptionResponse,
-  RedetermineCollateralRequest,
-  CombinedDocumentResponse,
-  CombinedDocumentListResponse,
+  CaseDuplicateFlagParty,
+  CaseDuplicateFlag,
+  CaseDuplicateFlagsResponse,
+  KeepBothRequest,
+  DuplicateResolutionResponse,
+  MergeDuplicateRequest,
   PartyMatchItem,
   CasePartyMatchResponse,
+  CommentRefType,
   CommentVisibility,
   CaseCommentItem,
   CaseCommentListResponse,
   AddCaseCommentRequest,
   EditCaseCommentRequest,
+  status__2,
   LcCaseListItem,
   LcCaseListResponse,
   LcCaseDetailResponse,
+  LcCommentNotificationItem,
+  LcCommentNotificationListResponse,
+  LcPortalSummaryResponse,
+  LcCaseReviewResponse,
+  LcWithdrawalNoticeRequest,
   FinancingKind,
-  FinancingRead,
+  CalculationBlocker,
+  CalculationBlockerRead,
+  CalculationStaleCause,
   MeasurementBasis,
   RefinancingForm,
   ScheduleLineResponse,
   ExcludedPaymentResponse,
+  DiscountingRowResponse,
   CalculationResultResponse,
-  ObjectRef,
-  FinancingContractRef,
-  DecisionRef,
-  ApprovalConditionState,
-  CovenantRef,
-  FinancingHistoryEntry,
-  FinancingOverviewResponse,
+  FinancingEndedReason,
+  FinancingRead,
+  CalculatePreviewRequest,
+  calculate_case_financing_api_v1_cases__case_id__financing_calculate_post_Body,
+  RunOutRequest,
   RecordLoanValuesRequest,
-  SetRefinancingRateRequest,
-  OverrideQuotaRequest,
-  SetValueDateRequest,
-  SetAgreedLoanAmountRequest,
-  CommitRateRequest,
+  UpdateTermsRequest,
   CorrectSettlementRequest,
   AddApprovalConditionRequest,
+  ApprovalConditionState,
   ApprovalConditionResponse,
   ApprovalConditionListResponse,
   WaiveConditionRequest,
-  GovernedActionType,
-  GovernedActionStatus,
-  GovernedActionResponse,
   FinancingComponentResponse,
   FinancingComponentListResponse,
   PaymentPlanRowType,
   PaymentPlanEntryResponse,
+  PlanCoverageResponse,
   PaymentPlanResponse,
   ManualPlanRowRequest,
   SetManualPlanRequest,
-  RefinancedCashFlowLine,
-  RefinancedCashFlowResponse,
-  RemainingBalanceResponse,
-  ContractContributionItem,
-  ContractContributionListResponse,
-  PerContractSideResponse,
-  FinancingRemainingBalanceResponse,
+  FinancingFilterOption,
+  FinancingFilterOptionsResponse,
   FinancingListItem,
   FinancingListResponse,
+  FinancingTabCounts,
+  FinancingBalanceRead,
+  RepaymentRowRead,
+  RepaymentRead,
+  ContractShareRead,
+  FinancingDetailRead,
+  UpdateMaintainedValuesRequest,
+  MiscDocumentResponse,
+  FinancingDocumentListResponse,
+  FinancingDocumentType,
+  Body_add_financing_document_api_v1_financings__financing_id__documents_post,
+  DocumentRowType,
+  DocumentRowSource,
+  DocumentOwnerKind,
+  DocumentOwnerRead,
+  DocumentManagedOn,
+  DocumentRowRead,
+  DocumentRowListResponse,
+  Body_upload_financing_document_row_api_v1_financings__financing_id__document_rows_post,
+  UpdateFinancingDocumentRequest,
+  CollateralProvider,
+  FinancingSecurityItem,
+  FinancingSecuritiesResponse,
+  CollateralType,
+  CollateralEvidenceItem,
+  CollateralRecheckState,
+  CollateralDecisionBlock,
+  CollateralValueItem,
+  app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+  SetCollateralTypeRequest,
+  SetCollateralTotalRequest,
+  Body_add_financing_collateral_evidence_api_v1_financings__financing_id__collateral_evidence_post,
+  RedetermineCollateralRequest,
+  PortalFinancingStatus,
+  LcFinancingListItem,
+  LcFinancingListResponse,
+  LcFinancingAgreementOption,
+  LcFinancingAgreementOptionsResponse,
+  PortalDocumentTypeItem,
+  PortalDocumentTypesResponse,
+  Body_upload_portal_partner_document_api_v1_lc_partners__id__documents_post,
+  PartnerDocumentItem,
   ContractDeferredState,
+  deferred_state,
   ContractStatus,
+  PerformanceStatus,
   ContractCompleteness,
   ContractListItem,
   ContractListResponse,
   ContractType,
   AmortisationType,
   InstalmentFrequency,
+  PaymentMethod,
+  PaymentMode,
   ContractCreate,
   ContractRead,
   PackageTotalsRead,
   BulkRemoveRequest,
   BulkRemoveResponse,
+  ContractFilterOption,
+  ContractFilterOptionsResponse,
+  ContractRecordRef,
+  ContractRecordFinancing,
+  ContractRecordState,
+  ContractRecordFigures,
+  ContractEditLock,
+  ContractRecordEditable,
+  ContractRecordRead,
   ContractEdit,
+  MarkNonPerforming,
   ContractRemove,
+  ContractDefer,
+  defer_contract_api_v1_contracts__contract_id__defer_post_Body,
   ObjectSubGroupItem,
   ObjectGroupItem,
   ObjectClassificationResponse,
+  LeaseCashFlowUnavailable,
+  LeasePaymentStatus,
+  LeaseCashFlowRowRead,
+  LeaseCashFlowRead,
+  LoanPaymentPlanUnavailable,
+  LoanPlanFinancingRead,
+  LoanPlanBankDetailsRead,
+  LoanPaymentPlanRead,
+  DirectDebitReturnReason,
+  DirectDebitReturnStatus,
+  DirectDebitReturnRead,
+  DirectDebitReturnListResponse,
+  DirectDebitReturnCreate,
+  DirectDebitReturnResolve,
   LeaseObjectRead,
   LeaseObjectListResponse,
   NewOrUsed,
   MarketValueIndicator,
   DATEvidenceStatus,
+  ObjectLocation,
+  RegistrationPartTwoStatus,
+  InsuranceProofStatus,
+  DuplicateCheckStatus,
   LeaseObjectCreate,
   LeaseObjectEdit,
   LeaseObjectRemove,
@@ -4869,6 +5702,7 @@ export const schemas = {
   PartnerType,
   CandidateSummary,
   PartnerMatchResponse,
+  PartnerAddressInput,
   LesseeCaptureRequest,
   LesseeLinkResponse,
   UboCompletenessStatus,
@@ -4876,6 +5710,7 @@ export const schemas = {
   LegalEntityIdentityDetail,
   PersonIdentityDetail,
   SoleTraderIdentityDetail,
+  PartyDuplicateState,
   PartnerDetailResponse,
   LesseeUnlinkResponse,
   GuarantorPreviewRequest,
@@ -4886,21 +5721,31 @@ export const schemas = {
   GuarantorRemoveRequest,
   CollateralPreviewRequest,
   ContractCollateralType,
-  ObligationKind,
   CollateralAddRequest,
   app__modules__contracts__interfaces__http__schemas__collateral_schemas__CollateralResponse,
   CollateralListItem,
   CollateralListResponse,
   CollateralRemoveRequest,
+  Body_download_milk_error_report_api_v1_cases__case_id__contracts_milk_error_report_post,
+  Body_validate_milk_delivery_api_v1_cases__case_id__contracts_milk_validate_post,
+  MilkFindingItem,
+  MilkContractItem,
+  MilkValidationResponse,
+  Body_import_milk_delivery_api_v1_cases__case_id__contracts_milk_import_post,
+  MilkImportResponse,
   Body_upload_contract_import_api_v1_cases__case_id__contracts_import_post,
   ImportBatchResponse,
+  ImportRowStatus,
+  status__3,
   ImportRowItem,
   ImportBatchPreviewResponse,
   ImportCommitResponse,
-  deferred_state,
+  contract_status,
   ContractWorkSurfaceItem,
   ContractWorkSurfaceResponse,
   UpdateMeRequest,
+  app__modules__users__interfaces__http__schemas__user_schemas__UserRef,
+  UserDetailResponse,
   UserMePermissionsResponse,
   AccessReason,
   GrantStatus,
@@ -4909,10 +5754,10 @@ export const schemas = {
   UserListItem,
   PaginatedUsersResponse,
   InviteUserRequest,
-  app__modules__users__interfaces__http__schemas__user_schemas__UserRef,
-  UserDetailResponse,
   EditUserRequest,
   ChangeEmailRequest,
+  GovernedActionType,
+  GovernedActionResponse,
   ResendReason,
   ResendInvitationRequest,
   SuspensionReason,
@@ -4968,17 +5813,22 @@ export const schemas = {
   PaginatedAuditEventsResponse,
   FieldDiffItem,
   AuditEventResponse,
-  DuplicateResolutionReasonCode,
-  ResolveDuplicatePairRequest,
-  ResolveDuplicatePairResponse,
-  MergeReasonCode,
-  MergeInitiateRequest,
-  MergeInitiateResponse,
+  MatchingEvidenceItem,
+  DuplicateCandidatePairResponse,
+  PairSideRoleResponse,
+  PairSideResponse,
+  DuplicatePairResolutionResponse,
+  DuplicateKeepApartRequest,
+  DuplicateResolutionResultResponse,
+  DuplicateMergeRequest,
   AssessmentAttributeResponse,
   AssessmentSourceTypeResponse,
   AssessmentCatalogueResponse,
   PartnerSubmitRequest,
   PartnerSubmitResponse,
+  PartyAddressUpdate,
+  PartyEditRequest,
+  OsPlusEditRequest,
   ResolutionEventSummary,
   ResolutionCandidatesResponse,
   ActorSummary,
@@ -4991,7 +5841,6 @@ export const schemas = {
   PartnerRelationshipsResponse,
   PartnerRelationshipType,
   PartnerRelationshipCreateRequest,
-  PartnerDocumentItem,
   PartnerDocumentsResponse,
   Body_upload_partner_document_api_v1_partners__id__documents_post,
   UboOwnershipRequest,
@@ -5000,14 +5849,13 @@ export const schemas = {
   LcNumberResponse,
   LcNumberListResponse,
   LcNumberCreateRequest,
+  AffectedAgreementItem,
   BankAccountResponse,
   BankAccountListResponse,
   BankAccountCreateRequest,
-  AffectedAgreementItem,
   BankAccountCloseResponse,
   PartnerAddressResponse,
   PartnerAddressListResponse,
-  PartnerAddressInput,
   ConfirmationHistoryEntry,
   ConfirmationHistoryResponse,
   DecisionHistoryEntry,
@@ -5033,12 +5881,12 @@ export const schemas = {
   AssessmentCreateRequest,
   AssessmentCancelRequest,
   PartnerMatchRequest,
+  PartnerCaptureRequest,
+  PartnerCaptureResponse,
   PartnerStatus,
-  PartnerRole,
+  RegistryRole,
   PartnerListItem,
   PartnerListResponse,
-  MatchingEvidenceItem,
-  DuplicateCandidatePairResponse,
   DuplicatePairListResponse,
   refinancing_form,
   SelectableTemplateItem,
@@ -5101,6 +5949,7 @@ export const schemas = {
   FALCPartnerItem,
   FALCPartnersResponse,
   FAUtilizationResponse,
+  FALinkedFinancingItem,
   FALinkedFinancingsResponse,
   FAPricingSnapshotResponse,
   FAEventTypeFilter,
@@ -5192,11 +6041,13 @@ export const schemas = {
   MaterializeRequest,
   MaterializedRequirementResponse,
   MaterializationResponse,
+  DocumentRoleScope,
+  LcFileUploader,
+  LCObligationFile,
   LCObligationItem,
   LCObligationResponse,
   LinkDocumentRequest,
   FulfilmentResponse,
-  TransitionStatusRequest,
   PerRequirementStatusResponse,
   CompletenessResponse,
   Body_upload_case_document_api_v1_cases__case_id__documents_post,
@@ -5204,23 +6055,26 @@ export const schemas = {
   CaseDocumentRow,
   CaseDocumentListResponse,
   RejectDocumentRequest,
-  MiscDocumentResponse,
+  MergeSourceResponse,
+  MergeSourcesResponse,
+  MergeDocumentsRequest,
   MiscDocumentListResponse,
   Body_add_case_misc_document_api_v1_cases__case_id__documents_misc_post,
   UpdateMiscDocumentRequest,
   GeneratedDocumentRow,
   GeneratedDocumentListResponse,
   Body_upload_calculation_data_sheet_api_v1_cases__case_id__generated_documents_calculation_data_sheet_post,
-  DocumentRoleScope,
   DocumentTypeOrigin,
   CreateDocumentTypeRequest,
   DocumentTypeResponse,
-  origin__2,
+  origin,
   role_scope,
   DocumentTypeListResponse,
   UpdateDocumentTypeRequest,
   DocumentTypeMatrixRow,
   DocumentTypeMatrixResponse,
+  IndustryClassResponse,
+  Wz2008Response,
   TestSessionRequest,
   OTPResponse,
 }
@@ -5941,14 +6795,14 @@ open step, or whose open step carries no role set, matches neither role.`,
         schema: assignee_id,
       },
       {
-        name: "origin",
-        type: "Query",
-        schema: origin,
-      },
-      {
         name: "lc_partner_id",
         type: "Query",
         schema: assignee_id,
+      },
+      {
+        name: "initiated_by",
+        type: "Query",
+        schema: waiting_on_role,
       },
       {
         name: "oldest_first",
@@ -6099,7 +6953,9 @@ open step, or whose open step carries no role set, matches neither role.`,
     alias:
       "undo_item_api_v1_cases__business_object_id__checklist_items__item_id__undo_post",
     description: `US 1.46 — Take back the last resolved checklist step (return it to OPEN). One step at a time,
-blocked past a no-way-back step. FO/BO, non-disclosure 404 like the rest of the runtime.`,
+blocked past a no-way-back step, and refused on a closed case (409). A step that closed DONE has
+its status moves reversed with it (US-1.115); a carrier that moved on since refuses the undo (409
+&#x60;WTC_CHECKLIST_UNDO_MOVES_DIVERGED&#x60;). FO/BO, non-disclosure 404 like the rest of the runtime.`,
     requestFormat: "json",
     parameters: [
       {
@@ -6194,13 +7050,14 @@ and the Leasing Company are all non-disclosure 404s. &#x60;business_object_id&#x
     method: "get",
     path: "/api/v1/cases/:case_id/activity",
     alias: "get_case_activity_api_v1_cases__case_id__activity_get",
-    description: `US 1.28 (PRD1042-1944) — the case&#x27;s Activity trail, newest first.
+    description: `US 1.28 (PRD1042-1944), US-1.114 — the case&#x27;s Activity trail, newest first.
 
-Read through the case (no separate history surface): every action on the case — case-level and
-checklist/four-eyes runtime alike — in one chronological stream. A missing or cross-tenant case
-is 404 (non-disclosure, in the service); a role with no path to the Activity area is 404 (the
-gate). Actor display names are resolved onto the response only — the stored audit rows are never
-touched.`,
+Read through the case (no separate history surface): every action on the case — case-level,
+checklist runtime, DAT data, redemption, the case&#x27;s contracts and its financing — in one
+chronological stream. Sensitive values arrive masked (AC5). A missing or cross-tenant case is
+404 (non-disclosure, in the service); a role with no path to the Activity area is 404 (the
+gate). An actor name missing from an older audit row is resolved onto the response only — the
+stored audit rows are never touched.`,
     requestFormat: "json",
     parameters: [
       {
@@ -6220,33 +7077,6 @@ touched.`,
       },
     ],
     response: CaseActivityResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/cases/:case_id/activity/export-csv",
-    alias:
-      "export_case_activity_csv_api_v1_cases__case_id__activity_export_csv_get",
-    description: `US 1.28 (PRD1042-1944) — export the case&#x27;s full Activity trail as CSV.
-
-Same guard as the read (missing/cross-tenant → 404, disallowed role → 404). The export access is
-itself audited (&#x60;CASE_ACTIVITY_EXPORTED&#x60;, sensitive) so pulling the whole trail out is on the
-record.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: z.unknown(),
     errors: [
       {
         status: 422,
@@ -6291,13 +7121,20 @@ readable — nothing is ever removed. There is deliberately no generic state-set
 a first-class user action, so it gets one, while ordinary case_status moves are driven by other
 business actions.
 
-Thin wrapper: role-gated (bank owner-role only — a non-owner is refused as not-found),
-tenant-scoped (a cross-tenant or unknown case is 404), then hands off to the service, which
-enforces the four-eyes rule when the case has a financing and drives the CANCELLED transition
-through the engine. A case already done, or already cancelled, cannot be cancelled again (the state
-machine refuses the move → 409).`,
+Thin wrapper: role-gated (Front / Back Office — anyone else is refused as not-found; the leasing
+company does not cancel, it discards its own draft — &#x60;&#x60;POST /lc/cases/{id}/discard&#x60;&#x60;, P30-33),
+tenant-scoped (a cross-tenant or unknown case is
+404), then hands off to the service. The reason is mandatory, 1–255 (422 otherwise; US-1.90, D1,
+F3) and goes into the audit entry. A closed case — cancelled, or its request rejected or cancelled
+— is refused (409 &#x60;&#x60;CASE_NOT_CANCELLABLE&#x60;&#x60;, F4), as is a done one (the state machine refuses the
+move). No four-eyes.`,
     requestFormat: "json",
     parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ reason: z.string().min(1).max(255) }).passthrough(),
+      },
       {
         name: "case_id",
         type: "Path",
@@ -6337,316 +7174,16 @@ machine refuses the move → 409).`,
   },
   {
     method: "get",
-    path: "/api/v1/cases/:case_id/collateral",
-    alias: "get_case_collateral_api_v1_cases__case_id__collateral_get",
-    description: `The package collateral for a case (US 1.14 / PRD1042-1930) — kind, current total, evidence,
-re-check state, and the full value history (every value kept). Front + back office see it; a role
-with no path (Power User, Auditor, LC, ...) and a cross-tenant/other-company case answer 404.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response:
-      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/cases/:case_id/collateral/confirm",
-    alias:
-      "confirm_case_collateral_api_v1_cases__case_id__collateral_confirm_post",
-    description: `The releasing role confirms the re-determined figure under four eyes (act 3 of 3). Back office.
-
-Requires the &#x60;&#x60;redetermined&#x60;&#x60; state (409 otherwise — confirming the old figure confirms nothing),
-and the confirmer must differ from the re-determiner (403). Clears the re-check.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response:
-      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "put",
-    path: "/api/v1/cases/:case_id/collateral/evidence",
-    alias:
-      "set_case_collateral_evidence_api_v1_cases__case_id__collateral_evidence_put",
-    description: `Record the evidence document reference (a bare id; the document is DRC-owned). Front office only.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: SetCollateralEvidenceRequest,
-      },
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response:
-      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/cases/:case_id/collateral/recheck",
-    alias:
-      "raise_case_collateral_recheck_api_v1_cases__case_id__collateral_recheck_post",
-    description: `Raise the re-check — the package composition changed, so the figure must be set again (US 1.14).
-
-Front office. (Manual raiser; the auto-raiser on a composition-change event and the consumer at
-step 3 of the object-swap / lessee-change catalogues are not built yet — deferred wiring.)`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response:
-      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/cases/:case_id/collateral/redetermine",
-    alias:
-      "redetermine_case_collateral_api_v1_cases__case_id__collateral_redetermine_post",
-    description: `The preparing role re-determines a NEW figure under an open re-check (act 2 of 3). Front office.
-
-Requires a pending re-check (409 if none). Writes a fresh value and moves the state to
-&#x60;&#x60;redetermined&#x60;&#x60;; the releasing role must still confirm.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: RedetermineCollateralRequest,
-      },
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response:
-      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "put",
-    path: "/api/v1/cases/:case_id/collateral/total",
-    alias:
-      "set_case_collateral_total_api_v1_cases__case_id__collateral_total_put",
-    description: `Enter or correct the package total — a new history row (every value kept); above the
-per-vehicle cap it is stored capped. Front office only.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: SetCollateralTotalRequest,
-      },
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response:
-      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "put",
-    path: "/api/v1/cases/:case_id/collateral/type",
-    alias:
-      "set_case_collateral_type_api_v1_cases__case_id__collateral_type_put",
-    description: `Set the kind of security (single selection). Front office (the preparing role) only.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: SetCollateralTypeRequest,
-      },
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response:
-      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/cases/:case_id/combined-document",
-    alias:
-      "build_combined_document_api_v1_cases__case_id__combined_document_post",
-    description: `Build (or rebuild) the combined document for a case (PRD1042-1943, US 1.27).
-
-Merges every generated and uploaded document, plus a checklist and correspondence summary, into one
-PDF with a table of contents; stores it and records the build. A rebuild keeps the history of earlier
-builds (R3) and becomes the current one. A case with nothing to merge is refused (422). Front Office
-only (the clerk owns step 42); a case the caller cannot see, or a disallowed role, answers 404.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: CombinedDocumentResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/cases/:case_id/combined-document",
-    alias:
-      "read_combined_document_api_v1_cases__case_id__combined_document_get",
-    description: `The current combined document&#x27;s metadata (PRD1042-1943), or 404 if none has been built.
-
-FO + BO + Bank Power User (read-only view); auditor / leasing company / system admin → 404.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: CombinedDocumentResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/cases/:case_id/combined-document/download",
-    alias:
-      "download_combined_document_api_v1_cases__case_id__combined_document_download_get",
-    description: `Stream the current combined document PDF for filing (PRD1042-1943). 404 if none has been built.
-
-The bank files it in its own archive by hand — the platform offers the download and never
-auto-files or transfers it anywhere.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: z.unknown(),
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/cases/:case_id/combined-document/history",
-    alias:
-      "list_combined_document_builds_api_v1_cases__case_id__combined_document_history_get",
-    description: `Every build on the case, newest first — the build history, never destroyed by a rebuild (R3).`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: CombinedDocumentListResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
     path: "/api/v1/cases/:case_id/comments",
     alias: "list_case_comments_api_v1_cases__case_id__comments_get",
-    description: `The case&#x27;s comment thread, oldest first (PRD1042-1893 item 18).
+    description: `The case&#x27;s comment thread, newest first (PRD1042-1893 item 18; US-1.113, rule 06 AC3).
 
 Correspondence lives as a comment thread on the case: the channel through which the bank tells
 the leasing company what is missing, and the LC answers — in the manner of a ticketing tool. The
 LC reads (and writes) on its OWN case only (tenant + company scoping through the case itself);
-every other role answers 404. One thread, both sides see all of it. The thread sends nothing —
-the on-hold case state is what sends the leasing company to look.`,
+every other role answers 404. An LC reader never receives an internal comment.
+&#x60;&#x60;has_unseen_bank_comment&#x60;&#x60; tells a leasing-company reader that the bank left it a comment it
+has not marked as seen (US-1.113, AC1); it is always false for the bank.`,
     requestFormat: "json",
     parameters: [
       {
@@ -6680,16 +7217,18 @@ the on-hold case state is what sends the leasing company to look.`,
     alias: "add_case_comment_api_v1_cases__case_id__comments_post",
     description: `Add a comment to the case thread (PRD1042-1893 item 18).
 
-Append-only — a comment is never edited or deleted; the thread is the record of what was said.
 Both sides write: the bank (front / back office) and the leasing company on its own case. Each
 comment records the author&#x27;s role at the time, so the reader sees which side spoke. Audited
-(&#x60;&#x60;CASE_COMMENT_ADDED&#x60;&#x60;); NO outbound notification of any kind in this slice.
+(&#x60;&#x60;CASE_COMMENT_ADDED&#x60;&#x60;).
 
 **Visibility (US 1.53 part 1, PO answer A4):** &#x60;visibility&#x60; defaults to &#x60;INTERNAL&#x60; — bank-only,
 never served to a leasing-company user. Making a comment &#x60;EXTERNAL&#x60; is an explicit choice. An LC
 author is pinned to &#x60;EXTERNAL&#x60; in the service whatever it sends, so the customer cannot write a
-comment its own side would never see. Notifying the LC of an external comment is deliberately
-NOT here — A4 keeps it open (channel unconfirmed, no read surface exists).`,
+comment its own side would never see.
+
+**Notification (US-1.113, AC1):** a bank comment addressed to the leasing company notifies it in
+app (&#x60;&#x60;GET /lc/comment-notifications&#x60;&#x60; and the thread&#x27;s &#x60;&#x60;has_unseen_bank_comment&#x60;&#x60;) and records a
+System entry &#x60;&#x60;CASE_LC_NOTIFIED_OF_COMMENT&#x60;&#x60;. No e-mail. An LC comment notifies nobody.`,
     requestFormat: "json",
     parameters: [
       {
@@ -6786,10 +7325,36 @@ returned (200, not 204) because the FE keeps rendering the row. Audited
     ],
   },
   {
+    method: "post",
+    path: "/api/v1/cases/:case_id/comments/seen",
+    alias: "mark_case_comments_seen_api_v1_cases__case_id__comments_seen_post",
+    description: `**Mark as seen** (US-1.113, rule 06 §4.4.1, AC1) — leasing company only.
+
+The user has read the bank&#x27;s comments on its own case: the Comments-tab banner and the bell
+entry go until the bank addresses a newer comment to it. Per user, so a colleague&#x27;s notification
+stays. Idempotent. Any bank role, or another company&#x27;s case, answers 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "get",
     path: "/api/v1/cases/:case_id/contracts",
     alias: "list_contracts_api_v1_cases__case_id__contracts_get",
-    description: `The contracts of a request (paged, optionally filtered to one import run).
+    description: `The contracts of a request (paged, optionally filtered to one import run or deferred state).
 
 Tenant-scoped, and a leasing-company caller sees only its own request&#x27;s contracts. Removed contracts
 are excluded. Each row carries its derived completeness for the badge.`,
@@ -6806,6 +7371,11 @@ are excluded. Each row carries its derived completeness for the badge.`,
         schema: assignee_id,
       },
       {
+        name: "deferred_state",
+        type: "Query",
+        schema: deferred_state,
+      },
+      {
         name: "limit",
         type: "Query",
         schema: z.number().int().gte(1).lte(100).optional().default(50),
@@ -6814,6 +7384,11 @@ are excluded. Each row carries its derived completeness for the badge.`,
         name: "offset",
         type: "Query",
         schema: z.number().int().gte(0).optional().default(0),
+      },
+      {
+        name: "sort",
+        type: "Query",
+        schema: assignee_id,
       },
     ],
     response: ContractListResponse,
@@ -6953,106 +7528,6 @@ Refused (409) once the financing is frozen. FO + BO; tenant-scoped → 404.`,
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/cases/:case_id/contracts/:contract_id/payment-plan/refinanced-cash-flow",
-    alias:
-      "read_refinanced_cash_flow_api_v1_cases__case_id__contracts__contract_id__payment_plan_refinanced_cash_flow_get",
-    description: `The refinanced cash flow derived from a contract&#x27;s plan (PRD1042-1927, US 1.11).
-
-Instalments after the value date included, one on it excluded; quota applied per line rounded to the
-cent; both counts reported. Derived over the plan rows — never a second maintained plan.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-      {
-        name: "contract_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: RefinancedCashFlowResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/cases/:case_id/contracts/:contract_id/payment-plan/remaining-balance",
-    alias:
-      "read_remaining_balance_api_v1_cases__case_id__contracts__contract_id__payment_plan_remaining_balance_get",
-    description: `The remaining balance read over a contract&#x27;s plan at &#x60;&#x60;as_of&#x60;&#x60; (PRD1042-1927, US 1.11 R4).
-
-&#x60;&#x60;as_of&#x60;&#x60; is a query parameter, never persisted — the sum of plan amounts due after it. FO + BO;
-tenant-scoped → 404.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-      {
-        name: "contract_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-      {
-        name: "as_of",
-        type: "Query",
-        schema: z.string(),
-      },
-    ],
-    response: RemainingBalanceResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/cases/:case_id/contracts/:contract_id/per-contract-side",
-    alias:
-      "read_per_contract_side_api_v1_cases__case_id__contracts__contract_id__per_contract_side_get",
-    description: `The bank&#x27;s side of one contract (PRD1042-1950, US 1.34).
-
-The component figures + the refinanced cash flow, shown DISTINCT from the lease payment plan the
-lessee pays (the two are different — both parties earn on the deal). Objects are named as an absent
-block (US-1.8 unbuilt), not faked. Reads stored values, never recomputes (R1). Clerk + approver;
-tenant-scoped → 404.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-      {
-        name: "contract_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: PerContractSideResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
     method: "post",
     path: "/api/v1/cases/:case_id/contracts/bulk-remove",
     alias: "bulk_remove_api_v1_cases__case_id__contracts_bulk_remove_post",
@@ -7124,7 +7599,8 @@ LC user for its own company.`,
     description: `The staged run: how many rows the file held / are valid / failed, and the rows (paged).
 
 The result screen the uploader works from — the valid rows can be committed without waiting for the
-rest. No duplicate count is shown (repeat detection is undecided — 1920-OQ-02).`,
+rest. No duplicate count is shown (repeat detection is undecided — 1920-OQ-02). &#x60;&#x60;status&#x60;&#x60; filters the
+paged rows server-side, so a tab of the dialog pages through every row of its kind (BUG-140).`,
     requestFormat: "json",
     parameters: [
       {
@@ -7147,6 +7623,11 @@ rest. No duplicate count is shown (repeat detection is undecided — 1920-OQ-02)
         type: "Query",
         schema: z.number().int().gte(1).lte(100).optional().default(100),
       },
+      {
+        name: "status",
+        type: "Query",
+        schema: status__3,
+      },
     ],
     response: ImportBatchPreviewResponse,
     errors: [
@@ -7165,7 +7646,7 @@ rest. No duplicate count is shown (repeat detection is undecided — 1920-OQ-02)
     description: `Commit the run&#x27;s valid rows into the request as contracts (PRD1042-1921, US 1.5).
 
 Each row resolves its party on the Creditreform/Schufa number through the canonical partner mechanism
-(matched, never created blind — an unresolved definite duplicate rejects the row) and becomes a
+(matched, never created blind — a duplicate hit flags the party and never rejects the row) and becomes a
 contract stamped with the batch id and the bulk-file origin. Partial import is the normal case; the
 remaining rejected rows stay for the correction file. A batch commits exactly once (409 otherwise).`,
     requestFormat: "json",
@@ -7223,6 +7704,144 @@ from duplicating).`,
     ],
   },
   {
+    method: "post",
+    path: "/api/v1/cases/:case_id/contracts/milk/error-report",
+    alias:
+      "download_milk_error_report_api_v1_cases__case_id__contracts_milk_error_report_post",
+    description: `The error report for a MILK delivery, as a print-ready PDF.
+
+On rejection the submitter receives an error report as a **separate file**, not a message on the
+screen (§6). Per finding it carries the sheet, the row as it appears in the submitter&#x27;s own
+workbook, the field under its workbook heading, the delivered value, a reason written for the
+person correcting the file, the rule reference and the severity — and, for a value-list finding,
+what would have been accepted, so nobody has to open the template to find out.
+
+Findings are grouped by sheet, then by row, because that is how a file is corrected: the row is
+opened once and everything in it is fixed at once. Warnings are reported in their own section
+and the report states they did not cause the rejection.
+
+The workbook is posted again rather than referenced, because nothing was kept from the check
+(§7). That is what the prototype does — it holds the file client-side and sends it when the
+download is clicked — and it is the only option that does not create the trace §7 denies.`,
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ file: z.string() }).passthrough(),
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/contracts/milk/import",
+    alias:
+      "import_milk_delivery_api_v1_cases__case_id__contracts_milk_import_post",
+    description: `Import an accepted MILK workbook into the request as contracts (MILK Phase 6).
+
+The commit half of the upload. The delivery is **re-validated here** rather than trusted: the
+check stores no trace (§7), so there is no server-side verdict to carry forward, and a caller
+asserting that its file passed would make the check advisory. A delivery that does not pass is
+refused whole with 422 and nothing is written — all-or-nothing is decided at file level (§5).
+
+Each row becomes a contract through the same service manual entry uses, with its objects attached
+by the object-list rule: the list where a contract has one, otherwise the single object on its own
+row. Contracts are stamped &#x60;bulk_file&#x60;, the same provenance the US-1.5 import uses.
+
+**An imported contract arrives without its lessee** and therefore reads *incomplete*, exactly as a
+manually added one does before its party is captured. Whether the import should resolve the party
+itself is Q-079; until it is answered, leaving it empty invents nothing. Gate 1 holds the request
+back until every contract has one, so the capture is deferred rather than skipped.
+
+**No payment plan is written**, even when &#x60;Staffelraten&#x60; is delivered: an instalment needs a due
+date, and the timing convention, what &#x60;Laufzeit N&#x60; counts and where the residual falls are all
+unsettled. **No collateral is written**: five of MILK&#x27;s eight types have no equivalent, and
+importing only the three that map would silently drop declared security.
+
+Same window and roles as manual capture — MILK introduces no permission of its own (§1).`,
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ file: z.string() }).passthrough(),
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: MilkImportResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/contracts/milk/validate",
+    alias:
+      "validate_milk_delivery_api_v1_cases__case_id__contracts_milk_validate_post",
+    description: `Check a MILK workbook against the Sparkasse M rules and answer. Nothing is imported or stored.
+
+The MILK bulk upload hands a filled workbook over and the answer comes back: validation runs here,
+never in the interface, which is what makes the rule set enforceable (§2.2). Four sheets, joined on
+the contract number, checked through layers A–J — file, structure, row shape, type, format, value
+list, mandatory, conditional, uniqueness and cross-sheet. Layers A and B refuse the whole delivery
+before a single row is read.
+
+The outcome is decided for the FILE, not the row: one error anywhere means the delivery is refused
+including the rows that passed (§5). Warnings are reported apart and never refuse a file.
+
+**Nothing is written** — no batch, no stored file, no audit row. §7 is explicit that a failed
+attempt leaves no trace and the corrected file is re-uploaded whole, so staging one here would
+create the very trace the specification says does not exist. Whether an *accepted* delivery should
+leave an Upload Request record is Q-080 and is not answered here.
+
+&#x60;accepted: true&#x60; means the file would be acceptable, not that anything was imported: the commit
+step is blocked on the party decision (Q-079) and on twelve MILK columns that have no field in the
+contract record (BUG-059). FO + BO (on the company&#x27;s behalf) + the LC user for its own company; the
+same window and roles as manual capture, because MILK introduces no permission of its own (§1).`,
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ file: z.string() }).passthrough(),
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: MilkValidationResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "get",
     path: "/api/v1/cases/:case_id/contracts/totals",
     alias: "read_totals_api_v1_cases__case_id__contracts_totals_get",
@@ -7245,68 +7864,13 @@ from duplicating).`,
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/cases/:case_id/correspondence",
-    alias:
-      "record_case_correspondence_api_v1_cases__case_id__correspondence_post",
-    description: `Record a piece of correspondence on a case (PRD1042-1942, US 1.26).
-
-Independent of any dispatch: what kind it was, which documents were included (references into the
-case&#x27;s resolved document set — the documents produced on the case, not a second local list, R3),
-and a free-text note. An included code that is not a document produced on the case → 400. Clerk
-(front office) only; tenant-scoped → 404.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: RecordCorrespondenceRequest,
-      },
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: CorrespondenceResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/cases/:case_id/correspondence",
-    alias: "list_case_correspondence_api_v1_cases__case_id__correspondence_get",
-    description: `The correspondence recorded on a case, newest first (PRD1042-1942, US 1.26); empty when none.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: CorrespondenceListResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
     method: "get",
     path: "/api/v1/cases/:case_id/data",
     alias: "read_case_data_api_v1_cases__case_id__data_get",
     description: `The case Data area — the captured data grouped by field block (PRD1042-1938, US 1.22).
 
 The wizard is intake; this is where the data lives and is corrected. Only the blocks whose capture
-exists today are populated (leasing company, lessee + contracts, financing, collateral); the unbuilt
+exists today are populated (leasing company, lessee + contracts, financing); the unbuilt
 blocks (objects, credit assessment, guarantor) are named in &#x60;&#x60;absent_blocks&#x60;&#x60;. Credit exposure /
 the financing amount are a pending figure, never a group. The financing block carries the
 calculation state (a correction devalues it until recalculation). Bank-side surface: front + back
@@ -7418,58 +7982,14 @@ the two by hand and records the difference — the platform never reads the valu
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/cases/:case_id/dispatch",
-    alias: "read_case_dispatch_api_v1_cases__case_id__dispatch_get",
-    description: `The dispatch state of a case (PRD1042-1942, US 1.26) — resting-false until confirmed.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: DispatchResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/cases/:case_id/dispatch/confirm",
-    alias: "confirm_case_dispatch_api_v1_cases__case_id__dispatch_confirm_post",
-    description: `Confirm that the documents were dispatched externally (PRD1042-1942, US 1.26).
-
-The platform never performs the send — the clerk dispatches by the bank&#x27;s encrypted-email process
-and confirms it here; that confirmation completes the step. &#x60;&#x60;dispatch_confirmed&#x60;&#x60; moves from its
-resting false to true, with the confirming actor + time. Idempotent — a second confirm keeps the
-first confirmation. Clerk (front office) only; tenant-scoped → 404.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: DispatchResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
     method: "post",
     path: "/api/v1/cases/:case_id/documents",
     alias: "upload_case_document_api_v1_cases__case_id__documents_post",
+    description: `Upload one file against a requirement of the case (201) — the bank and the leasing company.
+
+The leasing company reaches only its own company&#x27;s cases (another&#x27;s answers 404) and only the
+requirements on its list: a requirement the **bank generates** answers **404** and nothing is stored
+(P30-34, client round 2 point 7). MIME whitelist, magic bytes and size cap as every case document.`,
     requestFormat: "form-data",
     parameters: [
       {
@@ -7503,7 +8023,10 @@ Both the bank (front + back office) and the leasing company (its own obligations
 list; the leasing company sees whether the bank has checked what it sent. The resolved set is
 consumed from the case&#x27;s frozen snapshot, never re-derived (R3). Tenant + LC scope resolves the
 case (a case the caller cannot see → 404). File arrival dates are given in UTC and in the tenant
-business timezone (Europe/Berlin, no zone label, R6).`,
+business timezone (Europe/Berlin, no zone label, R6). For the leasing company the list leaves out
+requirements whose document the **bank generates** (the calculation data sheet, the loan offer, …) —
+so its wizard and its submission gate never count one as missing (P30-34 follow-up); the bank&#x27;s list
+keeps them.`,
     requestFormat: "json",
     parameters: [
       {
@@ -7513,67 +8036,6 @@ business timezone (Europe/Berlin, no zone label, R6).`,
       },
     ],
     response: CaseDocumentListResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/cases/:case_id/documents-to-send",
-    alias:
-      "list_documents_to_send_api_v1_cases__case_id__documents_to_send_get",
-    description: `The documents that go to the leasing company, as one download set (PRD1042-1942, US 1.26).
-
-Limited to the generated types marked externally dispatchable — the financing commitment, the loan
-offer and the payment/amortisation plan — never an unrestricted list of case files, and never an
-internal-only generated document (cover sheet, total-exposure sheet, bank settlement, calculation
-data sheet): those cannot be selected for external dispatch by construction (R2). The platform does
-NOT send them — the bank dispatches by its own encrypted-email process. Bank-side; tenant-scoped → 404.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: DocumentsToSendResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/cases/:case_id/documents/:requirement_definition_id/check",
-    alias:
-      "check_case_document_api_v1_cases__case_id__documents__requirement_definition_id__check_post",
-    description: `The bank confirms an uploaded document is the right one → CHECKED (PRD1042-1939, US 1.23).
-
-A bank-side review action available to both bank roles (front and back office), with no four eyes
-on the single file — the whole-set sign-off at step 16 keeps its four eyes as a separate gate. The
-leasing company never checks (refused as not-found). Thin wrapper over the review service.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-      {
-        name: "requirement_definition_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FulfilmentResponse,
     errors: [
       {
         status: 422,
@@ -7624,7 +8086,8 @@ wrapper over the fulfilment service.`,
 
 Per FILE, not per requirement: a requirement can hold several documents, so a single remove on
 the row would have no defensible target. The same pair of permissions as the upload — whoever may
-file may take their filing back — with the same tenant/LC scoping, so a case the caller cannot
+file may take their filing back — and a leasing company takes back only what its own company filed:
+a bank file on its case answers 404 (BUG-111). Same tenant/LC scoping, so a case the caller cannot
 see answers not-found.
 
 Refused (422) once the bank has CHECKED the document: that is evidence the bank accepted, and
@@ -7664,18 +8127,56 @@ guessing what the withdrawal did to the row&#x27;s state (the last file going ta
   },
   {
     method: "post",
-    path: "/api/v1/cases/:case_id/documents/:requirement_definition_id/reject",
+    path: "/api/v1/cases/:case_id/documents/:requirement_definition_id/files/:document_id/check",
     alias:
-      "reject_case_document_api_v1_cases__case_id__documents__requirement_definition_id__reject_post",
-    description: `The bank rejects an uploaded document → INVALID, and the requirement goes back to outstanding
-(PRD1042-1939, US 1.23; PRD1042-1794 A7). Both bank roles, no four eyes on the single file; the LC
-never rejects. The reason is recorded on the transition. Thin wrapper over the review service.`,
+      "check_case_document_file_api_v1_cases__case_id__documents__requirement_definition_id__files__document_id__check_post",
+    description: `The bank confirms ONE filed document is the right one (US-1.109, rule 06 DC6). Returns the
+requirement&#x27;s re-derived state (DC5).
+
+Both bank roles (&#x60;&#x60;doc.check&#x60;&#x60;), no four eyes on the single file — the whole-set sign-off at step
+16 keeps its own. The leasing company never checks (not found). A file that is not awaiting review
+→ 409 &#x60;&#x60;DOCUMENT_ALREADY_REVIEWED&#x60;&#x60;; a file not filed on this requirement → 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "requirement_definition_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "document_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FulfilmentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/documents/:requirement_definition_id/files/:document_id/reject",
+    alias:
+      "reject_case_document_file_api_v1_cases__case_id__documents__requirement_definition_id__files__document_id__reject_post",
+    description: `The bank rejects ONE filed document with a mandatory reason (US-1.109, rule 06 DC6, DC7).
+Returns the requirement&#x27;s re-derived state (DC5). The reason (1–255) is kept on the file and
+recorded in the case&#x27;s Activity trail. Same roles and refusals as Check.`,
     requestFormat: "json",
     parameters: [
       {
         name: "body",
         type: "Body",
-        schema: RejectDocumentRequest,
+        schema: z.object({ reason: z.string().min(1).max(255) }).passthrough(),
       },
       {
         name: "case_id",
@@ -7687,8 +8188,69 @@ never rejects. The reason is recorded on the transition. Thin wrapper over the r
         type: "Path",
         schema: z.string().uuid(),
       },
+      {
+        name: "document_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
     ],
     response: FulfilmentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/documents/merge",
+    alias: "merge_case_documents_api_v1_cases__case_id__documents_merge_post",
+    description: `Merge the picked PDFs into one, filed under Miscellaneous as &#x60;&#x60;merged_bundle_NN.pdf&#x60;&#x60; (type
+&quot;Merged bundle&quot;); the caller downloads it from the returned &#x60;&#x60;document_id&#x60;&#x60;. Front Office only.
+422: nothing picked (&#x60;&#x60;DOCUMENT_MERGE_NOTHING_SELECTED&#x60;&#x60;), a pick that is not a source of this case
+or is a bundle (&#x60;&#x60;…_SOURCE_NOT_ALLOWED&#x60;&#x60;), not a PDF (&#x60;&#x60;…_SOURCE_NOT_PDF&#x60;&#x60;) or unreadable
+(&#x60;&#x60;…_SOURCE_UNREADABLE&#x60;&#x60;).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: MergeDocumentsRequest,
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: MiscDocumentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/cases/:case_id/documents/merge-sources",
+    alias:
+      "list_merge_sources_api_v1_cases__case_id__documents_merge_sources_get",
+    description: `The documents the merge modal offers (US-1.110, rule 06 §5.5): Generated, Filed against a
+requirement and Miscellaneous, each flagged PDF or not. Merged bundles are never listed. Front
+Office only (&#x60;&#x60;doc.merge&#x60;&#x60;).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: MergeSourcesResponse,
     errors: [
       {
         status: 422,
@@ -7788,7 +8350,10 @@ a requirement upload. The document type and label are optional and set here or e
     path: "/api/v1/cases/:case_id/documents/misc/:misc_id",
     alias:
       "remove_case_misc_document_api_v1_cases__case_id__documents_misc__misc_id__delete",
-    description: `Remove a miscellaneous document (soft remove — bytes + row kept for audit) (PRD1042-2263).`,
+    description: `Remove a miscellaneous document (soft remove — bytes + row kept for audit) (PRD1042-2263).
+
+Bank-side only since BUG-111 — like the list, upload and relabel of the miscellaneous documents; the
+leasing company answers 403.`,
     requestFormat: "json",
     parameters: [
       {
@@ -7803,6 +8368,102 @@ a requirement upload. The document type and label are optional and set here or e
       },
     ],
     response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/cases/:case_id/duplicates",
+    alias: "read_case_duplicate_flags_api_v1_cases__case_id__duplicates_get",
+    description: `The open duplicate flags of the case&#x27;s parties — what checklist step 2 lists (US-1.99, Rule 06
+§2.2.8). Every open pair touching the lessee, a guarantor or a guarantee collateral&#x27;s guarantor,
+with both records it names (&#x60;&#x60;roles&#x60;&#x60; empty for the bank&#x27;s other record). FO + BO only; the LC and
+every other role answer 404 — duplicate data never reaches the portal (Rule 01).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseDuplicateFlagsResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/duplicates/:pair_id/keep-both",
+    alias:
+      "keep_both_duplicate_api_v1_cases__case_id__duplicates__pair_id__keep_both_post",
+    description: `Keep both records: the pair is two different parties (US-1.99). Front Office or Back Office, one click.
+A pair not touching this case → 404; an already resolved pair → 409.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: KeepBothRequest,
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "pair_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DuplicateResolutionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/cases/:case_id/duplicates/:pair_id/merge",
+    alias:
+      "merge_duplicate_api_v1_cases__case_id__duplicates__pair_id__merge_post",
+    description: `Merge the pair in the chosen direction (US-1.99): the survivor stays, the other record is
+retired, and this case&#x27;s lessee / guarantor / guarantee-collateral references move to the survivor
+in the same transaction. Front Office or Back Office, no reason code, no approver (P30-25). A
+survivor outside the pair → 422; a pair not touching this case → 404; an already resolved pair →
+409.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: MergeDuplicateRequest,
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "pair_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DuplicateResolutionResponse,
     errors: [
       {
         status: 422,
@@ -7838,52 +8499,29 @@ case that has no financing yet, both answer 404 (existence is never leaked acros
     ],
   },
   {
-    method: "put",
-    path: "/api/v1/cases/:case_id/financing/agreed-loan-amount",
-    alias:
-      "set_case_financing_agreed_loan_amount_api_v1_cases__case_id__financing_agreed_loan_amount_put",
-    description: `Set the AGREED_AMOUNT basis&#x27;s disbursement input on the case&#x27;s financing (§6.5.1).
-
-&quot;Blank business&quot;: the amount is an input, not derived from a lease stream. Read only when the bound
-product template&#x27;s measurement basis is AGREED_AMOUNT. Editable up to the bank settlement, same
-window as the value date.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: SetAgreedLoanAmountRequest,
-      },
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FinancingRead,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
     method: "post",
     path: "/api/v1/cases/:case_id/financing/calculate",
     alias:
       "calculate_case_financing_api_v1_cases__case_id__financing_calculate_post",
     description: `Run the provisional refinancing calculation over the current terms (PRD1042-11, US 1.41).
 
-A read-only compute — nothing is persisted (saving the terms stays the PUT endpoints). The
+A read-only compute — nothing is persisted. With a body it previews the unsaved Terms on screen
+(the tab&#x27;s Calculate, PRD1042-2266 / Rule 07 CA3); without, it runs on the stored terms. Saving
+— terms and result together — is &#x60;&#x60;PUT …/financing/terms&#x60;&#x60;. The
 measurement basis of the bound product template decides which computation runs: PRESENT_VALUE
 discounts the contracts&#x27; lease streams, AGREED_AMOUNT returns the stored agreed amount, and
-RATIO_ON_ACQUISITION_COST is refused (no delivered sample, OQ-22) → 422. A missing term (rate,
+RATIO_ON_ACQUISITION_COST lends the net acquisition cost × the ratio (bullet or straight-line,
+no discounting; an annuity on it → 422). A missing term (rate,
 quota, value date, agreed amount) or an uncalibrated frequency also refuses with a typed 422,
 never a computed zero (§6.5.8).`,
     requestFormat: "json",
     parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema:
+          calculate_case_financing_api_v1_cases__case_id__financing_calculate_post_Body,
+      },
       {
         name: "case_id",
         type: "Path",
@@ -7914,42 +8552,6 @@ engine. A financing already ended or cancelled cannot be cancelled again (the st
 the move → 409).`,
     requestFormat: "json",
     parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FinancingRead,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/cases/:case_id/financing/commit-rate",
-    alias:
-      "commit_case_financing_rate_api_v1_cases__case_id__financing_commit_rate_post",
-    description: `Commit the rate and freeze its expiry — the first freeze point, step 4 (PRD1042-1931, US 1.15).
-
-The committed rate + its expiry freeze together and are immutable thereafter (409 on a re-commit):
-they are the fixed reference the settlement rate is compared against. The lock is 7 or 14 days (a
-value outside is a 400); the expiry is the value date + the lock, or today + the lock when no value
-date is set. A rate must already be entered to commit it (else 422, naming the missing rate).`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: z
-          .object({ lock_days: z.number().int().default(7) })
-          .partial()
-          .passthrough(),
-      },
       {
         name: "case_id",
         type: "Path",
@@ -8083,11 +8685,12 @@ an unknown condition, or a cross-tenant / unknown financing, is 404.`,
     path: "/api/v1/cases/:case_id/financing/conditions/:condition_id/undo",
     alias:
       "undo_financing_condition_api_v1_cases__case_id__financing_conditions__condition_id__undo_post",
-    description: `Undo a settlement — MET → OPEN, re-arming the disbursement block (US 1.51).
+    description: `Undo a settlement or a waiver — MET / WAIVED → OPEN, re-arming the disbursement block
+(US 1.51; waiver: US-1.98).
 
-The mirror of settle, and the same front-office / back-office capability: a MET condition returns
-to OPEN and its settlement metadata is cleared. A condition that is not MET (still open, or waived
-/ expired) is a 409 &#x60;APPROVAL_CONDITION_NOT_UNDOABLE&#x60;; an unknown condition, or a cross-tenant /
+The mirror of settle and waive, and the same front-office / back-office capability: the condition
+returns to OPEN and its settlement or waiver metadata is cleared. A condition that is still open,
+or expired, is a 409 &#x60;APPROVAL_CONDITION_NOT_UNDOABLE&#x60;; an unknown condition, or a cross-tenant /
 unknown financing, is 404.`,
     requestFormat: "json",
     parameters: [
@@ -8116,13 +8719,11 @@ unknown financing, is 404.`,
     path: "/api/v1/cases/:case_id/financing/conditions/:condition_id/waive",
     alias:
       "waive_financing_condition_api_v1_cases__case_id__financing_conditions__condition_id__waive_post",
-    description: `Request a waiver of an approval condition — the governed override (PRD1042-1937 R2, US 1.21).
+    description: `Waive an approval condition — OPEN → WAIVED in one step (US-1.98, Rule 06 §2.2.7, K6).
 
-Front or back office initiates with a mandatory reason + expiry; a SECOND bank user (back office)
-then approves via &#x60;POST /governed-actions/{id}/approve&#x60; (the engine enforces initiator ≠ approver).
-Initiation does NOT change the condition — it stays OPEN, so the disbursement block holds until the
-waiver is approved. A cross-tenant / unknown case is 404; an unknown condition on the financing is
-404; a non-OPEN condition is 409 (a settled/already-waived condition cannot be waived).`,
+Front office and back office waive, with an optional comment and no second approver; the waived
+condition no longer holds the disbursement. A non-open condition is a 409; an unknown condition,
+or a cross-tenant / unknown financing, is 404.`,
     requestFormat: "json",
     parameters: [
       {
@@ -8141,7 +8742,7 @@ waiver is approved. A cross-tenant / unknown case is 404; an unknown condition o
         schema: z.string().uuid(),
       },
     ],
-    response: GovernedActionResponse,
+    response: ApprovalConditionResponse,
     errors: [
       {
         status: 422,
@@ -8186,47 +8787,13 @@ into Calculating). A blank reason is **400**.`,
     ],
   },
   {
-    method: "post",
-    path: "/api/v1/cases/:case_id/financing/follow-ups",
-    alias: "start_follow_up_api_v1_cases__case_id__financing_follow_ups_post",
-    description: `Start a follow-up case on a live deal&#x27;s financing (PRD1042-1953, US 1.37).
-
-&#x60;&#x60;case_id&#x60;&#x60; is the case the financing came from (the financing surface is keyed on it). The clerk
-names the event (redemption / lessee change / object swap / extension / asset event); a redemption
-derives single vs package from the affected contracts. Thin wrapper: role-gated (clerk or approver;
-others 404), then the service resolves the financing (tenant-scoped → 404), refuses a terminal
-financing (409), validates the redemption selection (422), and creates the linked case. Both this
-route and the case-list route converge on the same service method.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: StartFollowUpRequest,
-      },
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: CaseResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
     method: "get",
     path: "/api/v1/cases/:case_id/financing/handover-file",
     alias:
       "download_handover_file_api_v1_cases__case_id__financing_handover_file_get",
     description: `The hand-over file for the bank&#x27;s core system — checklist step 18 (PRD1042-1941, US 1.25).
 
-Thirty-one comma-separated fields in the four classes the core system expects (case data /
+Thirty comma-separated fields in the four classes the core system expects (case data /
 calculated values / fixed defaults / institution-filled); amounts at two decimals, rates at
 three. Carries NEITHER returned value — the loan number and loan account do not exist when the
 file is produced. Re-producible while the loan is not yet set up; every export is audited
@@ -8242,71 +8809,6 @@ financing → 404. Columns without a calculation carrier export EMPTY (see &#x60
       },
     ],
     response: z.unknown(),
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/cases/:case_id/financing/overview",
-    alias:
-      "read_financing_overview_api_v1_cases__case_id__financing_overview_get",
-    description: `The single financing-overview page (PRD1042-1949, US 1.33) — one page that says what a live
-financing is and what it is worth, without opening the case.
-
-A pure DISPLAY assembly: identity (reference / state / LC / framework agreement / product template /
-loan), the real figures available now (refinancing rate, effective quota, collateral total, contract
-+ object counts), a navigable contracts→objects reference tree, and the originating decision, the
-covenants (approval conditions) and the financing&#x27;s own state history as navigable references. The
-deal FIGURES (nominal claim, present value, financing amount, quote %) are DEFERRED behind the calc
-engine (1931-OQ-03) — surfaced null with &#x60;&#x60;figures_pending&#x60;&#x60;, never fabricated.
-
-Access (R1): clerk (FO) / approver (BO) / read-only (support) / administrator (bank power user) see
-the financing and its figures; the leasing company sees its OWN financing scoped, but never the
-bank-side figures (&#x60;&#x60;bank_figures_visible&#x3D;false&#x60;&#x60; and the figures are null); auditor and system-admin
-have no path in → 404 (object non-disclosure). A case with no financing yet also answers 404.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FinancingOverviewResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/cases/:case_id/financing/per-contract",
-    alias:
-      "list_per_contract_contributions_api_v1_cases__case_id__financing_per_contract_get",
-    description: `The contracts in the financing, each with its contribution + status, plus the package totals
-(PRD1042-1950, US 1.34).
-
-A package loan is one loan made of the refinanced side of each contract. Each contribution figure
-is READ from the stored component (nullable → pending until the calc engine lands, 1931-OQ-03),
-never recomputed here (R1). A removed contract&#x27;s component drops out and the total is worked out
-again. Clerk + approver (front + back office); tenant-scoped → 404.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: ContractContributionListResponse,
     errors: [
       {
         status: 422,
@@ -8333,72 +8835,6 @@ Refused (409) once the financing is frozen. FO + BO; tenant-scoped → 404.`,
       },
     ],
     response: FinancingComponentListResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "put",
-    path: "/api/v1/cases/:case_id/financing/quota",
-    alias:
-      "override_case_financing_quota_api_v1_cases__case_id__financing_quota_put",
-    description: `Override the refinancing quota on the case&#x27;s financing (PRD1042-1931, US 1.15).
-
-The framework agreement holds the default; the financing may depart from it per deal, and the
-override is logged. The effective quota (override ?? agreement) is resolved on read — this stores
-only the departure, never a second maintained copy. Never validated as a business rule; zero on the
-residual is legitimate. Editable up to the bank settlement.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: OverrideQuotaRequest,
-      },
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FinancingRead,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "put",
-    path: "/api/v1/cases/:case_id/financing/rate",
-    alias: "set_case_financing_rate_api_v1_cases__case_id__financing_rate_put",
-    description: `Enter or change the refinancing rate in the case&#x27;s Calculation area (PRD1042-1931, US 1.15).
-
-Typed per deal, no default, carried at three decimals (a fourth is a 400). Editable up to the bank
-settlement (step 15) — once the financing is disbursed the field is closed (409). On the first rate
-capture the product-template version is pinned onto the financing (the calculation carrier). The
-preparing role enters it, without four eyes — the control is the audit trail + the settlement
-deadline.`,
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: SetRefinancingRateRequest,
-      },
-      {
-        name: "case_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FinancingRead,
     errors: [
       {
         status: 422,
@@ -8443,9 +8879,9 @@ is deferred (US-1.11 + 1931-OQ-03); this records the recalculation + the version
     description: `Record the loan number and loan account the bank&#x27;s core system returns (PRD1042-1941, US 1.25).
 
 There is no live connection — a person types the two values in after the core system sets the loan
-up. They share one lifecycle: editable while the financing is open and not disbursed, fixed after
-payout (a later attempt is 409). Thin wrapper: role-gated (front office only — the preparing role;
-a non-preparer, incl. back office, is refused as not-found), it resolves the financing by case
+up. They share one lifecycle: editable from SetUp onwards, never on a cancelled financing (P29-03;
+otherwise 409). Thin wrapper: role-gated (front and back office, rule 01 &#x60;fin.loanno&#x60;; any other
+role is refused as not-found), it resolves the financing by case
 (tenant-scoped → 404 for a cross-tenant or unknown case), then hands off to the service, which locks
 the row, enforces the editable-status precondition, and audits the change.`,
     requestFormat: "json",
@@ -8471,27 +8907,30 @@ the row, enforces the editable-status precondition, and audits the change.`,
     ],
   },
   {
-    method: "get",
-    path: "/api/v1/cases/:case_id/financing/remaining-balance",
+    method: "post",
+    path: "/api/v1/cases/:case_id/financing/run-out",
     alias:
-      "read_financing_remaining_balance_api_v1_cases__case_id__financing_remaining_balance_get",
-    description: `The financing&#x27;s remaining balance at &#x60;&#x60;as_of&#x60;&#x60; — the sum of its components&#x27; remaining balances
-(PRD1042-1950, US 1.34 R4). &#x60;&#x60;as_of&#x60;&#x60; is a query parameter, never persisted. Clerk + approver;
-tenant-scoped → 404.`,
+      "request_case_financing_run_out_api_v1_cases__case_id__financing_run_out_post",
+    description: `Ask for the case&#x27;s disbursed financing to run out (F-6, BUG-098).
+
+An error after the payout: the financing is cancelled and set up again. Fail-closed governance (44-step
+matrix): nothing moves here — 202 with a pending governed action a **different** Back Office user
+approves; the requester can never approve it (403). Back Office only (others: 404, non-disclosure).
+Only a DISBURSED financing may run out (409 otherwise); a second request while one is pending → 409.`,
     requestFormat: "json",
     parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ reason: z.string().min(1).max(500) }).passthrough(),
+      },
       {
         name: "case_id",
         type: "Path",
         schema: z.string().uuid(),
       },
-      {
-        name: "as_of",
-        type: "Query",
-        schema: z.string(),
-      },
     ],
-    response: FinancingRemainingBalanceResponse,
+    response: PendingApprovalResponse,
     errors: [
       {
         status: 422,
@@ -8502,19 +8941,26 @@ tenant-scoped → 404.`,
   },
   {
     method: "put",
-    path: "/api/v1/cases/:case_id/financing/value-date",
+    path: "/api/v1/cases/:case_id/financing/terms",
     alias:
-      "set_case_financing_value_date_api_v1_cases__case_id__financing_value_date_put",
-    description: `Set the refinancing start / value date on the case&#x27;s financing (PRD1042-1931, US 1.15).
+      "update_case_financing_terms_api_v1_cases__case_id__financing_terms_put",
+    description: `Save every term of the Calculations tab in one write (PRD1042-2266, Rule 07 §3, §9).
 
-One fact — the date from which the refinancing runs and the instalment boundary. Editable up to the
-bank settlement.`,
+A full replacement — every field is sent, &#x60;&#x60;null&#x60;&#x60; clears it. The Save also stores the calculation
+the terms imply (Rule 07 CA3), returned as &#x60;&#x60;calculation_result&#x60;&#x60;; terms that cannot be calculated
+yet still save, with no result. Front and Back Office. Editable while
+the financing is Draft or Calculating; from ReadyForSetup (the bank settlement) the calculation is
+frozen — 409 &#x60;&#x60;FINANCING_RATE_FIELD_LOCKED&#x60;&#x60;. Once step 4 committed the rate, its quote date and
+lock period are frozen with it — 409 &#x60;&#x60;FINANCING_COMMITTED_RATE_IMMUTABLE&#x60;&#x60;. Invalid input (a
+fourth decimal on the rate, an instalment day other than 1 / 30, a lock other than 7 / 14, a first
+instalment not after the value date) is 422 &#x60;&#x60;VALIDATION_ERROR&#x60;&#x60;. A role outside FO / BO, another
+tenant&#x27;s case, or a case without a financing is 404.`,
     requestFormat: "json",
     parameters: [
       {
         name: "body",
         type: "Body",
-        schema: z.object({ value_date: z.string() }).passthrough(),
+        schema: UpdateTermsRequest,
       },
       {
         name: "case_id",
@@ -8686,9 +9132,10 @@ the rate has not been committed yet. Returns the refreshed generated-document li
     description: `Produce (or re-produce) the loan offer — step 24, out at step 32 (PRD1042-1940, US 1.24).
 
 Prints the loan number and the bank&#x27;s own loan account read from the financing (empty until the
-step-18 set-up records them). The case annotation, the per-LC framework-agreement references and
-the two accounts resolved through the framework agreement are pending carriers and render as
-such. Reproducible; signature lines stay empty (signing happens outside the platform).`,
+step-18 set-up records them), and the payout and collection accounts the financing&#x27;s framework
+agreement designates (P30-60; pending with no linked agreement or no designated account). The case
+annotation and the per-LC framework-agreement references are pending carriers and render as such.
+Reproducible; signature lines stay empty (signing happens outside the platform).`,
     requestFormat: "json",
     parameters: [
       {
@@ -8739,16 +9186,24 @@ step-18 loan set-up (409 GENERATED_DOCUMENT_LOCKED, logged). Front Office alone 
     alias: "bind_leasing_company_api_v1_cases__case_id__leasing_company_put",
     description: `Step 1 of the wizard: resolve the leasing company from its Händlernummer.
 
+The company must be eligible (rule 03 §2.2: confirmed legal entity with a Händlernummer) and
+hold an agreement in force today that sets a usable template; otherwise 422
+&#x60;&#x60;CASE_LC_UNRESOLVED&#x60;&#x60;. The template is bound with it (rule 03 D1, US-1.78). The leasing
+company binds only its own company; any other number answers 404 (BUG-045), and only while the
+request is its working document — Draft or Missing information; in any other state it answers
+409 &#x60;&#x60;LC_REQUEST_LOCKED&#x60;&#x60; and nothing changes (P29-12, rule 08 §4.1 CT1).
+
 PUT rather than POST because it is settable more than once — the bank may change the company
-until the bank settlement, which is where the quota, the dates and the accounts freeze anyway.`,
+until the bank settlement, which is where the quota, the dates and the accounts freeze anyway.
+
+BUG-095 — &#x60;&#x60;lc_partner_id&#x60;&#x60; names the company picked in the wizard; it must hold &#x60;&#x60;lc_number&#x60;&#x60;.
+Sent without it, a number that more than one eligible company holds is &#x60;&#x60;CASE_LC_UNRESOLVED&#x60;&#x60;.`,
     requestFormat: "json",
     parameters: [
       {
         name: "body",
         type: "Body",
-        schema: z
-          .object({ lc_number: z.string().regex(/^[0-9]{4}$/) })
-          .passthrough(),
+        schema: BindLeasingCompanyRequest,
       },
       {
         name: "case_id",
@@ -8791,15 +9246,14 @@ until the bank settlement, which is where the quota, the dates and the accounts 
     method: "get",
     path: "/api/v1/cases/:case_id/party-matches",
     alias: "read_case_party_matches_api_v1_cases__case_id__party_matches_get",
-    description: `The match outcome for every party on the case&#x27;s contracts (PRD1042-1929, US 1.13).
+    description: `The match outcome and advisory duplicate flag of every party on the case (PRD1042-1929, US-1.86).
 
 For each party — the lessee and every guarantor (the co-obligor is a guarantor with a kind of
 obligation, not a separate category) — surfaces the computed match outcome (recognised / new /
-candidate; no strength grades), the partner&#x27;s status and display name, and whether an unresolved
-duplicate exists. &#x60;&#x60;submission_blocked&#x60;&#x60; reflects the submission hard-stop condition; the submit gate
-(US-1.17) enforces it, this read only shows it. A pure display over the matching mechanism owned by
-PRD1042-1922. FO + BO + the leasing company on its own case; the response carries no bank records, so
-an LC caller sees the warning on its own party without seeing the register. Others → 404.`,
+candidate; no strength grades), the partner&#x27;s status and display name, and
+&#x60;&#x60;has_unresolved_duplicate&#x60;&#x60;: the advisory flag capture sets instead of refusing a duplicate. The
+bank resolves it inside the case; it never blocks the LC&#x27;s submit. A pure display over the matching
+mechanism owned by PRD1042-1922. FO + BO only — the LC sees no duplicate data at all. Others → 404.`,
     requestFormat: "json",
     parameters: [
       {
@@ -8874,11 +9328,13 @@ even if it exists. Changeable by the bank until the bank settlement, hence PUT.`
     method: "post",
     path: "/api/v1/cases/:case_id/reactivate",
     alias: "reactivate_case_api_v1_cases__case_id__reactivate_post",
-    description: `Bring a cancelled case back to &#x60;&#x60;open&#x60;&#x60; (PRD1042-1947, US 1.31).
+    description: `Ask for a cancelled case to be reopened (V-5; PRD1042-1947, US 1.31; BUG-099).
 
-Role-gated (bank owner-role only — a non-owner is refused as not-found), tenant-scoped (404 for a
-cross-tenant or unknown case). Reactivate flows through the same transition engine as every other
-move; a case that is not &#x60;&#x60;cancelled&#x60;&#x60; is refused by the state machine → 409.`,
+Fail-closed governance (44-step matrix, Q-018): the case does not move here. 202 with a pending
+governed action that a **different** Back Office user approves (&#x60;&#x60;POST /governed-actions/{id}/approve&#x60;&#x60;);
+the requester can never approve it (403). Role-gated (bank owner-role only — a non-owner is refused
+as not-found), tenant-scoped (404 for a cross-tenant or unknown case). A case that is not
+&#x60;&#x60;cancelled&#x60;&#x60; is refused now by the state machine → 409; a second request while one is pending → 409.`,
     requestFormat: "json",
     parameters: [
       {
@@ -8887,7 +9343,7 @@ move; a case that is not &#x60;&#x60;cancelled&#x60;&#x60; is refused by the sta
         schema: z.string().uuid(),
       },
     ],
-    response: CaseResponse,
+    response: PendingApprovalResponse,
     errors: [
       {
         status: 422,
@@ -9021,7 +9477,7 @@ company sees it on its own case. A bank owner-role only (an LC caller is refused
     method: "post",
     path: "/api/v1/cases/:case_id/resubmit",
     alias: "resubmit_request_api_v1_cases__case_id__resubmit_post",
-    description: `The clerk resubmits a returned refinancing request (PRD1042-1946, US 1.30).
+    description: `A returned refinancing request is sent back to the bank (PRD1042-1946, US 1.30; US-1.96).
 
 The RESUBMIT half of the return→correct→resubmit loop — the return half is &#x60;&#x60;POST /decide&#x60;&#x60; from
 US-1.29 (an approver decides missing-information / rework), so there is no new return endpoint here.
@@ -9029,9 +9485,10 @@ After correcting what the approver flagged, the front-office clerk sends the cas
 the request moves &#x60;&#x60;{missing-information | rework} → submitted&#x60;&#x60; and its round counter increments.
 
 Thin wrapper: clerk-role gated (front office only; any other role — including back office — is
-refused as not-found, object non-disclosure), tenant-scoped (a cross-tenant or unknown case is
-404), then hands off to the service, which enforces the returned-state precondition (a request not
-in a returned state → 409) and records who resubmitted and the new round. There is deliberately no
+refused as not-found, object non-disclosure; the leasing company uses &#x60;&#x60;POST /lc/cases/{id}/resubmit&#x60;&#x60;),
+tenant-scoped (a cross-tenant or unknown case is 404), then hands off to the service, which refuses
+a request not in a returned state (409), runs the first-submission checks (422 with the failed
+checks, US-1.96) and records who resubmitted and the new round. There is deliberately no
 body: resubmit carries no input of its own; the correction happened on the case beforehand.`,
     requestFormat: "json",
     parameters: [
@@ -9079,11 +9536,11 @@ body: resubmit carries no input of its own; the correction happened on the case 
     description: `The one-page review of a refinancing request before submission (PRD1042-1933, US 1.17).
 
 Everything entered, on one page: the case, the leasing company + agreement values, every contract
-with its lessee / type / residual and completeness, the collateral, and the financing figures —
+with its lessee / type / residual and completeness, and the financing figures —
 the financing volume shown as PENDING (it is the derived payout amount, deferred with US-1.15&#x27;s
 calculation). A read composing the existing per-concern reads; each block keeps its own visibility
-rule (an LC user reads its own case with the bank figures blanked). Tenant + LC scoped → 404 for a
-case the caller cannot see.`,
+rule. Tenant scoped → 404 for a case the caller cannot see. Bank roles only (BUG-072): the leasing
+company&#x27;s review is &#x60;&#x60;GET /lc/cases/{id}/review&#x60;&#x60;, which carries its own case projection.`,
     requestFormat: "json",
     parameters: [
       {
@@ -9133,13 +9590,64 @@ work continues in the case workspace, not the wizard.`,
   },
   {
     method: "get",
+    path: "/api/v1/cases/leasing-companies",
+    alias: "list_case_leasing_companies_api_v1_cases_leasing_companies_get",
+    description: `The leasing companies the tenant&#x27;s cases name — the bank case list&#x27;s Leasing company filter
+(Milestone 1 rule 02 §1.3 &quot;the leasing companies present in the list&quot;, BUG-081). Front and Back
+Office only; every other role answers not-found. Sorted by name.`,
+    requestFormat: "json",
+    response: CaseLeasingCompaniesResponse,
+  },
+  {
+    method: "get",
+    path: "/api/v1/cases/leasing-company-resolution",
+    alias:
+      "resolve_leasing_company_api_v1_cases_leasing_company_resolution_get",
+    description: `Wizard step 1 (Milestone 1 rule 03 §2.3, US-1.78): the agreement in force today and the bank
+product template it sets, for the company just picked, before the case exists.
+
+Front Office, Back Office and the leasing company read it; every other role answers not-found.
+The leasing company resolves only its own company (another id → 404) and never sees the quota,
+the framework volume or the template — only &#x60;&#x60;has_usable_template&#x60;&#x60; (BUG-114), which every reader
+gets, as it gets &#x60;&#x60;lc_numbers&#x60;&#x60; (the company&#x27;s dealer numbers — the LC&#x27;s own; step 1 binds the first). A partner that may not act as a leasing company → 422
+&#x60;&#x60;CASE_LC_UNRESOLVED&#x60;&#x60;. Read-only; the bind (&#x60;&#x60;PUT /cases/{id}/leasing-company&#x60;&#x60;) applies the
+same resolution.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "lc_partner_id",
+        type: "Query",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: LeasingCompanyResolutionResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/classifications/wz2008",
+    alias: "list_wz2008_api_v1_classifications_wz2008_get",
+    description: `The WZ 2008 classification (839 subclasses, &#x60;&#x60;NN.NN.N&#x60;&#x60;) an industry code is chosen from — the
+German wording is Destatis&#x27;, the English the NACE Rev. 2 class&#x27;s. Any signed-in user.`,
+    requestFormat: "json",
+    response: Wz2008Response,
+  },
+  {
+    method: "get",
     path: "/api/v1/contracts",
     alias: "list_contracts_across_cases_api_v1_contracts_get",
-    description: `The contracts the caller can see, across their cases (US-1.73).
+    description: `The contracts of the tenant, across their cases (US-1.73, P30-15) — filterable, sortable, paged.
 
-Guarded by the same role set as every other contract read. &#x60;total&#x60; counts the matching set, not
-the page: this surface is meant to answer &quot;how many contracts look like this&quot;, and a total that
-reported the page would answer a different question.`,
+The bank&#x27;s list (M2 spec §1: Front and Back Office); every other role answers 404. The filters
+combine (AND). &#x60;total&#x60; counts the matching set, not the page: this surface is meant to answer &quot;how
+many contracts look like this&quot;, and a total that reported the page would answer a different
+question.`,
     requestFormat: "json",
     parameters: [
       {
@@ -9153,6 +9661,36 @@ reported the page would answer a different question.`,
         schema: deferred_state,
       },
       {
+        name: "contract_status",
+        type: "Query",
+        schema: contract_status,
+      },
+      {
+        name: "financing_reference",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "no_financing",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+      {
+        name: "lc_partner_id",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "case_id",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "sort",
+        type: "Query",
+        schema: z.string().optional().default("-created_at"),
+      },
+      {
         name: "limit",
         type: "Query",
         schema: z.number().int().gte(1).lte(100).optional().default(50),
@@ -9164,6 +9702,31 @@ reported the page would answer a different question.`,
       },
     ],
     response: ContractWorkSurfaceResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/contracts/:contract_id",
+    alias: "read_contract_record_api_v1_contracts__contract_id__get",
+    description: `P30-06 — the contract record page: the contract and the records around it.
+
+Own contracts only (client round 2, blocker 2): the scope is in the query, so another leasing
+company&#x27;s contract, another tenant&#x27;s and an unknown id all answer 404 alike.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ContractRecordRead,
     errors: [
       {
         status: 422,
@@ -9209,14 +9772,14 @@ cleared. Without it every absent field would reach the service as &#x60;&#x60;No
     alias: "add_collateral_api_v1_contracts__contract_id__collaterals_post",
     description: `Add a collateral to a contract (PRD1042-2167, unblocks US 1.45).
 
-Type is GUARANTEE / SECURITY_DEPOSIT / BUY_BACK_AGREEMENT. A GUARANTEE requires exactly one of
-&#x60;&#x60;identity&#x60;&#x60; (create-confirmed) / &#x60;&#x60;existing_partner_id&#x60;&#x60; (link) and also assigns the party the
-guarantor role on this contract; the other two types reject a party. FO + BO + LC-own; only in the
-request&#x27;s write window. Any number of collaterals per contract; the same live guarantee party twice
-is refused.
-
-&#x60;&#x60;kind_of_obligation&#x60;&#x60; says what the party takes on — &#x60;&#x60;guarantee&#x60;&#x60; or &#x60;&#x60;co_obligation&#x60;&#x60; (Q-051).
-Guarantee-only, like the party; omitted means &#x60;&#x60;guarantee&#x60;&#x60;.`,
+&#x60;&#x60;value&#x60;&#x60; is mandatory (0.01–99,999,999.99). A GUARANTEE requires exactly one of &#x60;&#x60;identity&#x60;&#x60;
+(create-confirmed) / &#x60;&#x60;existing_partner_id&#x60;&#x60; (link) and also assigns the party the guarantor role on
+this contract; every other type rejects a party and requires &#x60;&#x60;provider_name&#x60;&#x60; (the address is
+optional), which a GUARANTEE refuses (rule 04 C2). FO + BO + LC-own; only in the request&#x27;s write
+window. Any number of collaterals per contract; the same live guarantee party twice is refused.
+&#x60;&#x60;keep_both&#x60;&#x60; / &#x60;&#x60;duplicate_note&#x60;&#x60; carry the Matching candidates decision for the party, as on the
+lessee capture (US-1.116). A Guarantee party created here takes &#x60;&#x60;personennummer_os_plus&#x60;&#x60; and the
+party mask&#x27;s &#x60;&#x60;addresses&#x60;&#x60; and &#x60;&#x60;dealer_numbers&#x60;&#x60; in the same transaction (P30-17); sent without &#x60;&#x60;identity&#x60;&#x60; → 409 CONTRACT_COLLATERAL_CAPTURE_BLOCKED.`,
     requestFormat: "json",
     parameters: [
       {
@@ -9279,7 +9842,7 @@ FO + BO + LC-own; only in the request&#x27;s write window.`,
       {
         name: "body",
         type: "Body",
-        schema: z.object({ reason: z.string().min(1).max(255) }).passthrough(),
+        schema: CollateralRemoveRequest,
       },
       {
         name: "contract_id",
@@ -9310,7 +9873,8 @@ FO + BO + LC-own; only in the request&#x27;s write window.`,
     description: `Search the partner register for a Guarantee&#x27;s party before anything is created (PRD1042-2167).
 
 Search-before-typing for the GUARANTEE case: returns the match candidates so the caller can link an
-existing partner rather than create a duplicate. Creates nothing. FO + BO + LC-own.`,
+existing partner rather than create a duplicate. Creates nothing. FO + BO only — the LC never
+receives candidates (404).`,
     requestFormat: "json",
     parameters: [
       {
@@ -9337,9 +9901,18 @@ existing partner rather than create a duplicate. Creates nothing. FO + BO + LC-o
     method: "post",
     path: "/api/v1/contracts/:contract_id/defer",
     alias: "defer_contract_api_v1_contracts__contract_id__defer_post",
-    description: `Hold a contract back within the request — reactivatable, not rejected (PRD1042-1928).`,
+    description: `Hold a contract back within the request — reactivatable, not rejected (PRD1042-1928).
+
+BUG-097 — on a committed contract this is C-8 (&#x60;&#x60;committed → deferred&#x60;&#x60;): &#x60;&#x60;reason&#x60;&#x60; is required
+(422 &#x60;&#x60;CONTRACT_DEFERRAL_REASON_REQUIRED&#x60;&#x60;). A contract the decision moved to Deferred cannot be
+reactivated (409 &#x60;&#x60;INVALID_CONTRACT_STATUS_TRANSITION&#x60;&#x60;).`,
     requestFormat: "json",
     parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: defer_contract_api_v1_contracts__contract_id__defer_post_Body,
+      },
       {
         name: "contract_id",
         type: "Path",
@@ -9356,16 +9929,133 @@ existing partner rather than create a duplicate. Creates nothing. FO + BO + LC-o
     ],
   },
   {
+    method: "get",
+    path: "/api/v1/contracts/:contract_id/direct-debit-returns",
+    alias:
+      "list_direct_debit_returns_api_v1_contracts__contract_id__direct_debit_returns_get",
+    description: `P30-13 — the contract&#x27;s direct debit returns, newest first (M2 spec §4.6). Front and Back Office;
+everyone else, another tenant&#x27;s contract and an unknown id answer 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DirectDebitReturnListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/contracts/:contract_id/direct-debit-returns",
+    alias:
+      "record_direct_debit_return_api_v1_contracts__contract_id__direct_debit_returns_post",
+    description: `P30-13 — record that the lessee&#x27;s direct debit for one instalment came back. Financed contract only
+(409 &#x60;&#x60;DIRECT_DEBIT_RETURN_NOT_ALLOWED&#x60;&#x60;); the instalment must be a paid row of the lease cash flow —
+a resolved one may be returned again, an open one not (409 &#x60;&#x60;DIRECT_DEBIT_RETURN_NOT_ELIGIBLE&#x60;&#x60;, also
+the loser of a concurrent record); returned on ∈ [due, today], reported on ∈ [returned on, today],
+&quot;other&quot; needs &#x60;&#x60;reason_other&#x60;&#x60; (400 &#x60;&#x60;INVALID_DIRECT_DEBIT_RETURN&#x60;&#x60;). Audited (paid → open).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: DirectDebitReturnCreate,
+      },
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DirectDebitReturnRead,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/contracts/:contract_id/direct-debit-returns/:return_id/resolve",
+    alias:
+      "resolve_direct_debit_return_api_v1_contracts__contract_id__direct_debit_returns__return_id__resolve_post",
+    description: `P30-13 — the payment came in after the return: resolved on ∈ [returned on, today] (400), an
+optional note; only an open return (409 &#x60;&#x60;DIRECT_DEBIT_RETURN_NOT_OPEN&#x60;&#x60;, also the loser of a
+concurrent resolve); unknown return 404. Audited (open → paid).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: DirectDebitReturnResolve,
+      },
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "return_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DirectDebitReturnRead,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/contracts/:contract_id/document-rows",
+    alias:
+      "list_contract_document_rows_api_v1_contracts__contract_id__document_rows_get",
+    description: `P30-04 — the contract record&#x27;s Documents table, newest first: the contract&#x27;s and its objects&#x27; documents
+and, for the bank, its financing&#x27;s. The leasing company (own contracts only) gets only contract / object
+documents its own company uploaded — never DAT reports, the financing&#x27;s or generated documents (until Q-123;
+the rule is the service&#x27;s). Another leasing company&#x27;s or tenant&#x27;s contract and an unknown id answer 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DocumentRowListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/contracts/:contract_id/guarantors",
     alias: "add_guarantor_api_v1_contracts__contract_id__guarantors_post",
     description: `Add a guarantor to a contract (PRD1042-1923, US 1.7).
 
 Links an existing partner (&#x60;&#x60;existing_partner_id&#x60;&#x60; — any status; a Partner is live from creation) or
-creates one confirmed (&#x60;&#x60;identity&#x60;&#x60;) and links it; an unresolved definite duplicate is a hard stop.
+creates one confirmed (&#x60;&#x60;identity&#x60;&#x60;) and links it; a duplicate hit is advisory and never blocks.
 Any number of distinct guarantors may be added; the same party twice (live) is refused. Optional
-kind of obligation (guarantee / co-obligation, open set). FO + LC-own only — Back Office cannot
-attach; only while the financing set is open (before the bank settlement).`,
+kind of obligation (guarantee / co-obligation, open set). FO + BO + LC-own (rule 01 R6), only inside
+the contract set&#x27;s write window.`,
     requestFormat: "json",
     parameters: [
       {
@@ -9457,7 +10147,7 @@ open. Removing a guarantor is not deleting or archiving the Partner.`,
     description: `Search the partner register for a guarantor before anything is created (PRD1042-1923, US 1.7).
 
 Search-before-typing: returns the match candidates so the caller can link an existing partner rather
-than create a duplicate. Creates nothing.`,
+than create a duplicate. Creates nothing. FO + BO only — the LC never receives candidates (404).`,
     requestFormat: "json",
     parameters: [
       {
@@ -9481,6 +10171,35 @@ than create a duplicate. Creates nothing.`,
     ],
   },
   {
+    method: "get",
+    path: "/api/v1/contracts/:contract_id/lease-cash-flow",
+    alias:
+      "read_lease_cash_flow_api_v1_contracts__contract_id__lease_cash_flow_get",
+    description: `P30-12 — the contract&#x27;s lease cash flow over the financing period (M2 spec §4.5): one row per lease
+payment of the stored plan from the value date to the financing&#x27;s maturity (or the contract&#x27;s early
+redemption); Refinanced &#x3D; due strictly after the value date; Loan payment &#x3D; round2(lease payment ×
+quota) on refinanced rows (Q-107); Sum refinanced, Applied quota, the payout (a package contract&#x27;s share
+of it, P30-46 — not recorded where the calculation stored none) and the residual line. A missing input answers
+200 with &#x60;&#x60;unavailable&#x60;&#x60; set. Front and Back Office only; everyone else, another tenant&#x27;s contract
+and an unknown id answer 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: LeaseCashFlowRead,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/contracts/:contract_id/lessee",
     alias: "capture_lessee_api_v1_contracts__contract_id__lessee_post",
@@ -9488,8 +10207,17 @@ than create a duplicate. Creates nothing.`,
 
 Either links an existing confirmed partner (&#x60;&#x60;existing_partner_id&#x60;&#x60;) or creates a new one confirmed
 (&#x60;&#x60;identity&#x60;&#x60;) and links it. Matched on the identity anchors incl. the Creditreform/Schufa number
-(a probable-match queues a duplicate pair for BO; an unresolved definite duplicate is a hard stop).
-Sets the contract&#x27;s lessee. FO + BO + LC-own; only in the request&#x27;s write window.`,
+(any duplicate hit opens an advisory duplicate pair for the bank and never blocks — US-1.86).
+Sets the contract&#x27;s lessee. FO + BO + LC-own; only in the request&#x27;s write window.
+
+The partner form&#x27;s Matching candidates decision (US-1.116), FO + BO only: &#x60;&#x60;keep_both&#x60;&#x60; creates the
+typed party even against an exact register match (an LC sending it → 409 LESSEE_CAPTURE_BLOCKED);
+&#x60;&#x60;duplicate_note&#x60;&#x60; (max 500) is stored on the duplicate pairs Keep both opens, and audited with the
+capture on Merge into (&#x60;&#x60;existing_partner_id&#x60;&#x60;).
+
+A party created here takes the party mask&#x27;s &#x60;&#x60;addresses&#x60;&#x60; and &#x60;&#x60;dealer_numbers&#x60;&#x60; in the same
+transaction (P30-17); they are refused with &#x60;&#x60;existing_partner_id&#x60;&#x60;
+and not written when the identity links an existing confirmed partner.`,
     requestFormat: "json",
     parameters: [
       {
@@ -9541,7 +10269,8 @@ Sets the contract&#x27;s lessee. FO + BO + LC-own; only in the request&#x27;s wr
     description: `Search the partner register for the lessee before anything is created (PRD1042-1922, US 1.6).
 
 Search-before-typing: returns the match candidates (existing partners) for the given identity so
-the caller can link one rather than create a duplicate. Creates nothing.`,
+the caller can link one rather than create a duplicate. Creates nothing. FO + BO only — the
+LC never receives candidates (404).`,
     requestFormat: "json",
     parameters: [
       {
@@ -9583,6 +10312,66 @@ re-captured. FO + BO + LC-own; only in the request&#x27;s write window. A contra
       },
     ],
     response: LesseeUnlinkResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/contracts/:contract_id/loan-payment-plan",
+    alias:
+      "read_loan_payment_plan_api_v1_contracts__contract_id__loan_payment_plan_get",
+    description: `P30-10 — the contract&#x27;s Loan payment plan tab: the repayment schedule of its own financing (for a
+package, the package loan&#x27;s whole schedule), read-only, with its Total line. The bank reads it adjusted for
+settled redemptions (labelled); a leasing-company caller reads the plan as priced, without the bank-only
+details (&#x60;&#x60;bank &#x3D; null&#x60;&#x60;: the product template, the set-up-in-OS+ flag). Nothing to show answers 200 with
+&#x60;&#x60;unavailable&#x60;&#x60; set. Front Office, Back Office and the leasing company on its own contracts; everyone
+else, another leasing company&#x27;s or tenant&#x27;s contract and an unknown id answer 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: LoanPaymentPlanRead,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/contracts/:contract_id/mark-non-performing",
+    alias:
+      "mark_contract_non_performing_api_v1_contracts__contract_id__mark_non_performing_post",
+    description: `P30-14 — mark a Financed contract as non-performing (M2 spec §4.3), with an optional reason.
+
+Front and Back Office only; every other role answers 404 (the module gate). A contract that is not
+Financed answers 409 &#x60;&#x60;CONTRACT_PERFORMANCE_NOT_ALLOWED&#x60;&#x60;, one already marked 409
+&#x60;&#x60;CONTRACT_ALREADY_NON_PERFORMING&#x60;&#x60;. Audited before → after. Returns the updated record.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: MarkNonPerforming,
+      },
+      {
+        name: "contract_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: ContractRecordRead,
     errors: [
       {
         status: 422,
@@ -9679,7 +10468,7 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
       {
         name: "body",
         type: "Body",
-        schema: z.object({ reason: z.string().min(1).max(255) }).passthrough(),
+        schema: ContractRemove,
       },
       {
         name: "contract_id",
@@ -9695,6 +10484,214 @@ destroyed; the response returns the now-removed contract with its &#x60;&#x60;re
         schema: HTTPValidationError,
       },
     ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/contracts/:ref_id/activity",
+    alias: "get_contract_activity",
+    description: `The entity&#x27;s own events (its comments included), newest first, values masked.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+    ],
+    response: CaseActivityResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/contracts/:ref_id/comments",
+    alias: "list_contract_comments",
+    description: `Newest first. Bank-only: every comment is internal, and the leasing company never
+reaches the thread (404).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(100),
+      },
+    ],
+    response: CaseCommentListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/contracts/:ref_id/comments",
+    alias: "add_contract_comment",
+    description: `Always stored as internal, whatever &#x60;&#x60;visibility&#x60;&#x60; says: the thread is bank-only.
+Audited on the entity itself, so it appears in its Activity trail.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: AddCaseCommentRequest,
+      },
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/contracts/:ref_id/comments/:comment_id",
+    alias: "edit_contract_comment",
+    description: `Author only (403 otherwise); a deleted comment cannot be edited (409).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ body: z.string().min(1).max(2000) }).passthrough(),
+      },
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "comment_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/contracts/:ref_id/comments/:comment_id",
+    alias: "delete_contract_comment",
+    description: `Author only (403 otherwise); a second delete is refused (409). The tombstone is returned.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "comment_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/contracts/filter-options",
+    alias: "list_contract_filter_options_api_v1_contracts_filter_options_get",
+    description: `The values one Contracts-list dropdown offers (P30-15, prototype &#x60;&#x60;ctrFilterValues&#x60;&#x60;): the
+refinancing statuses (lifecycle order, codes), financing references, leasing companies (id →
+name) or cases (id → reference) that occur among the caller&#x27;s live contracts — so a filter never
+returns nothing. Narrowed by &#x60;&#x60;q&#x60;&#x60; (contains, case ignored), at most 50. Same roles as the list
+(FO / BO); everyone else 404. Declared before &#x60;&#x60;/contracts/{contract_id}&#x60;&#x60;, which would take the
+path otherwise.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "field",
+        type: "Query",
+        schema: z
+          .string()
+          .regex(/^(contract_status|financing|leasing_company|case)$/),
+      },
+      {
+        name: "q",
+        type: "Query",
+        schema: assignee_id,
+      },
+    ],
+    response: ContractFilterOptionsResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/contracts/milk/template",
+    alias: "download_milk_template_api_v1_contracts_milk_template_get",
+    description: `The blank MILK workbook, for the submitter to fill in.
+
+Offered in the upload dialogue beside the file picker (§2.1). It carries the headings in the
+right order, the drop-downs down to row 1001 and a frozen heading row, and **no example rows**.
+
+Not case-scoped, and deliberately so: the template is the same file for every request and
+contains no case data, so binding it to a case would add a lookup that answers nothing. It is
+still authenticated, on the contracts read set — the same precedent as the object-classification
+config above.
+
+**Generated from the rule catalogue rather than stored.** The drop-downs are the only reason a
+checker this strict stays usable (§2.1), so a template whose lists disagreed with the rules
+would be worse than none — it would teach submitters to write values the checker then refuses.
+Building it from the same catalogue the validator reads makes that disagreement impossible, and
+means a revised validation workbook updates the template without anyone remembering to.`,
+    requestFormat: "json",
+    response: z.unknown(),
   },
   {
     method: "get",
@@ -9801,39 +10798,18 @@ user cannot see a count over cases their list would not show them.`,
     path: "/api/v1/document-requirement-catalogs/:catalog_id/fulfilments/link",
     alias:
       "link_document_api_v1_document_requirement_catalogs__catalog_id__fulfilments_link_post",
+    description: `Link an already stored document to a requirement as a fulfilment (bank side).
+
+Front and Back Office (&#x60;&#x60;DOCUMENT_REQUIREMENT_CATALOG_FULFILMENT_WRITE&#x60;&#x60;). A leasing-company user
+answers **403** (BUG-110): it uploads through &#x60;&#x60;POST /cases/{case_id}/documents&#x60;&#x60;, which scopes the
+case to its company and links internally. 422 &#x60;&#x60;INCOMPATIBLE_DOCUMENT_TYPE&#x60;&#x60; when the document&#x27;s
+recorded type differs from the requirement&#x27;s; 404 for an unknown requirement or catalogue.`,
     requestFormat: "json",
     parameters: [
       {
         name: "body",
         type: "Body",
         schema: LinkDocumentRequest,
-      },
-      {
-        name: "catalog_id",
-        type: "Path",
-        schema: z.string().uuid(),
-      },
-    ],
-    response: FulfilmentResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "post",
-    path: "/api/v1/document-requirement-catalogs/:catalog_id/fulfilments/transition",
-    alias:
-      "transition_status_api_v1_document_requirement_catalogs__catalog_id__fulfilments_transition_post",
-    requestFormat: "json",
-    parameters: [
-      {
-        name: "body",
-        type: "Body",
-        schema: TransitionStatusRequest,
       },
       {
         name: "catalog_id",
@@ -10068,28 +11044,14 @@ user cannot see a count over cases their list would not show them.`,
     alias: "list_financings_api_v1_financings_get",
     description: `The financings inventory of the tenant (PRD1042-1949, US 1.33) — sortable, filterable, paged.
 
-Three columns of the approved prototype still have no carrier and are absent: the payout
-amount (definition answered by 1931-OQ-03, carrier not built), the account number, and
-Sollbelastung / Habenbelastung (provenance unresolved — Q-058). The &#x60;Outstanding&#x60; filter is
-derived from the last two and waits on the same answer. Bank roles only (FO / BO / BPU); the LC
-and every platform role answer 404 (non-disclosure).`,
+P29-15: search on the financing / case reference, loan number, loan account and (US-1.66) account number;
+exact filters for the ID, loan account, leasing company and account number dropdowns; the &#x60;&#x60;outstanding&#x60;&#x60;
+toggle. They combine (AND). &#x60;&#x60;account_no&#x60;&#x60; is the IBAN of the payout account the financing&#x27;s framework
+agreement designates (Q-113) — shared by every financing under that agreement. Bank roles only (FO / BO /
+BPU, all of whom may read the agreement and the leasing company&#x27;s bank accounts); the LC and every platform
+role answer 404 (non-disclosure).`,
     requestFormat: "json",
     parameters: [
-      {
-        name: "search",
-        type: "Query",
-        schema: assignee_id,
-      },
-      {
-        name: "status",
-        type: "Query",
-        schema: z.array(FinancingStatus).optional().default([]),
-      },
-      {
-        name: "kind",
-        type: "Query",
-        schema: z.array(FinancingKind).optional().default([]),
-      },
       {
         name: "sort",
         type: "Query",
@@ -10105,24 +11067,6 @@ and every platform role answer 404 (non-disclosure).`,
         type: "Query",
         schema: z.number().int().gte(1).lte(100).optional().default(25),
       },
-    ],
-    response: FinancingListResponse,
-    errors: [
-      {
-        status: 422,
-        description: `Validation Error`,
-        schema: HTTPValidationError,
-      },
-    ],
-  },
-  {
-    method: "get",
-    path: "/api/v1/financings/export-csv",
-    alias: "export_financings_csv_api_v1_financings_export_csv_get",
-    description: `Export the filtered financings inventory as CSV (PRD1042-1949, US 1.33). The export is
-audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leaving the system is an access event.`,
-    requestFormat: "json",
-    parameters: [
       {
         name: "search",
         type: "Query",
@@ -10139,12 +11083,773 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
         schema: z.array(FinancingKind).optional().default([]),
       },
       {
+        name: "financing_reference",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "loan_account",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "lc_partner_id",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "account_no",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "outstanding",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
+    ],
+    response: FinancingListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/financings/:financing_id",
+    alias: "read_financing_api_v1_financings__financing_id__get",
+    description: `One financing by its own id — the financing detail page (P29-02).
+
+The same record as &#x60;&#x60;GET /cases/{case_id}/financing&#x60;&#x60; plus the page header (case reference,
+leasing company, framework agreement, product template), the hand-maintained values (P29-03),
+the tab counts and the balance banner. Front Office and Back Office only, like the per-case read:
+every other role, another tenant&#x27;s financing and an unknown id all answer 404 (object
+non-disclosure). Declared after &#x60;&#x60;/export-csv&#x60;&#x60; so that path is never read as an id.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FinancingDetailRead,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/financings/:financing_id/collateral",
+    alias:
+      "get_financing_collateral_api_v1_financings__financing_id__collateral_get",
+    description: `The financing&#x27;s DAT total (P29-06): kind, current total, an open proposal, evidence, re-check
+state and every version. 404 &#x60;&#x60;COLLATERAL_NOT_FOUND&#x60;&#x60; while nothing is captured.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/financings/:financing_id/collateral/confirm",
+    alias:
+      "confirm_financing_collateral_api_v1_financings__financing_id__collateral_confirm_post",
+    description: `APPROVE the open re-determination. Back Office; neither the proposer nor the step-35 resolver
+(403 &#x60;&#x60;COLLATERAL_CONFIRM_FORBIDDEN&#x60;&#x60;). No open proposal → 409 &#x60;&#x60;COLLATERAL_NOT_REDETERMINED&#x60;&#x60;. The
+value becomes the next version and the flag clears.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/financings/:financing_id/collateral/evidence",
+    alias:
+      "add_financing_collateral_evidence_api_v1_financings__financing_id__collateral_evidence_post",
+    description: `Attach one DAT evidence file — DAT PDF or vehicle Excel. Front and Back Office. Wrong format →
+422, over the size cap → 413; nothing stored.`,
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ file: z.string() }).passthrough(),
+      },
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/financings/:financing_id/collateral/evidence/:document_id",
+    alias:
+      "remove_financing_collateral_evidence_api_v1_financings__financing_id__collateral_evidence__document_id__delete",
+    description: `Remove one DAT evidence file (soft). Not a live evidence file of this financing → 404
+&#x60;&#x60;COLLATERAL_EVIDENCE_NOT_FOUND&#x60;&#x60;.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "document_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/financings/:financing_id/collateral/redetermine",
+    alias:
+      "redetermine_financing_collateral_api_v1_financings__financing_id__collateral_redetermine_post",
+    description: `PROPOSE a re-determined total. Front and Back Office (hub Q-127). No recorded total → 409
+&#x60;&#x60;COLLATERAL_NO_FIRST_VALUE&#x60;&#x60;; another proposal open → 409 &#x60;&#x60;COLLATERAL_PROPOSAL_OPEN&#x60;&#x60;. Raises no
+flag; stored as entered.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: RedetermineCollateralRequest,
+      },
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/financings/:financing_id/collateral/reject",
+    alias:
+      "reject_financing_collateral_api_v1_financings__financing_id__collateral_reject_post",
+    description: `REJECT the open re-determination — the same four eyes as the approval. The proposal is
+discarded, the current version stays, the flag stays raised.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "put",
+    path: "/api/v1/financings/:financing_id/collateral/total",
+    alias:
+      "set_financing_collateral_total_api_v1_financings__financing_id__collateral_total_put",
+    description: `Record the FIRST total — version 1, saved directly, no second person (hub Q-105 point 2); stored
+as entered (no cap until hub Q-132). Front and Back Office. Once a version exists → 409
+&#x60;&#x60;COLLATERAL_TOTAL_ALREADY_SET&#x60;&#x60;: a change is a re-determination.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: SetCollateralTotalRequest,
+      },
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "put",
+    path: "/api/v1/financings/:financing_id/collateral/type",
+    alias:
+      "set_financing_collateral_type_api_v1_financings__financing_id__collateral_type_put",
+    description: `Set the kind of security (single selection). Front and Back Office.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: SetCollateralTypeRequest,
+      },
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response:
+      app__modules__cases__interfaces__http__schemas__case_schemas__CollateralResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/financings/:financing_id/document-rows",
+    alias:
+      "list_financing_document_rows_api_v1_financings__financing_id__document_rows_get",
+    description: `P30-04 — the financing&#x27;s Documents table, newest first: its miscellaneous documents (removable), the
+Calculation Data Sheet of its case (generated) and the DAT evidence of its DAT record (&#x60;&#x60;managed_on &#x3D;
+collateral_card&#x60;&#x60; — edited on the DAT total card, never here); its contracts&#x27; and objects&#x27; documents join as
+those sources land. Front and Back Office; everyone else, another tenant&#x27;s and an unknown id answer 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DocumentRowListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/financings/:financing_id/document-rows",
+    alias:
+      "upload_financing_document_row_api_v1_financings__financing_id__document_rows_post",
+    description: `P30-04 — the table&#x27;s Upload with the financing as the owner. &#x60;&#x60;document_type&#x60;&#x60; is a table type; the
+financing takes &#x60;&#x60;MISCELLANEOUS&#x60;&#x60; only (&#x60;&#x60;DAT_REPORT&#x60;&#x60; / &#x60;&#x60;LEASE_CONTRACT&#x60;&#x60; → 422 &#x60;&#x60;DOCUMENT_TYPE_NOT_FOR_OWNER&#x60;&#x60;),
+and a generated type such as &#x60;&#x60;CALCULATION_DATA_SHEET&#x60;&#x60; is never uploaded (422 &#x60;&#x60;DOCUMENT_TYPE_NOT_UPLOADABLE&#x60;&#x60;).
+Stored through the financing&#x27;s document store — PDF / Excel, magic bytes, 25 MB (422 otherwise, nothing stored).
+Front and Back Office only.`,
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema:
+          Body_upload_financing_document_row_api_v1_financings__financing_id__document_rows_post,
+      },
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DocumentRowRead,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/financings/:financing_id/documents",
+    alias:
+      "list_financing_documents_api_v1_financings__financing_id__documents_get",
+    description: `The financing&#x27;s own miscellaneous documents, newest first (P29-07). Removed ones are left out.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FinancingDocumentListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/financings/:financing_id/documents",
+    alias:
+      "add_financing_document_api_v1_financings__financing_id__documents_post",
+    description: `Upload a document to the financing (P29-07). Through the secure media path — PDF / Excel
+only, the content confirmed by its magic bytes, 25 MB cap (422 otherwise, nothing stored). The
+type (&#x60;&#x60;original_agreement · addendum · correspondence · other&#x60;&#x60;) and label are optional.`,
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema:
+          Body_add_financing_document_api_v1_financings__financing_id__documents_post,
+      },
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: MiscDocumentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/financings/:financing_id/documents/:document_id",
+    alias:
+      "update_financing_document_api_v1_financings__financing_id__documents__document_id__patch",
+    description: `Set or clear a financing document&#x27;s type and label (P29-07).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateFinancingDocumentRequest,
+      },
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "document_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: MiscDocumentResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/financings/:financing_id/documents/:document_id",
+    alias:
+      "remove_financing_document_api_v1_financings__financing_id__documents__document_id__delete",
+    description: `Remove a financing document — a soft remove, the bytes and the row stay for audit (P29-07).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "document_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/financings/:financing_id/maintained-values",
+    alias:
+      "update_financing_maintained_values_api_v1_financings__financing_id__maintained_values_patch",
+    description: `Edit the hand-maintained values on the Data tab (P29-03): loan number, loan account,
+Sollbelastung and Habenausgleich (amount + date each).
+
+Partial — only the fields sent change. The loan number and account are editable from SetUp
+onwards and never on a cancelled financing (409 &#x60;&#x60;FINANCING_VALUES_LOCKED&#x60;&#x60;); the pre-financing
+pair always. The body carries the &#x60;&#x60;updated_at&#x60;&#x60; the page loaded (optimistic lock): a financing
+changed since answers 409 &#x60;&#x60;FINANCING_VERSION_CONFLICT&#x60;&#x60; and nothing is written. Every change is
+audited before → after (&#x60;&#x60;FINANCING_VALUES_EDITED&#x60;&#x60;) and shows in
+the financing&#x27;s Activity. Front and Back Office only; every other role, another tenant and an
+unknown id answer 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: UpdateMaintainedValuesRequest,
+      },
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FinancingDetailRead,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/financings/:financing_id/securities",
+    alias:
+      "list_financing_securities_api_v1_financings__financing_id__securities_get",
+    description: `The Collaterals tab&#x27;s &quot;Collaterals&quot; card (P29-06): every live collateral captured on the
+financing&#x27;s contracts — security, party, proof, contract and amount. Read only: they are captured
+with the contract. A contract held back from the financing is not one of its contracts. Front and
+Back Office; every other role, another tenant&#x27;s financing and an unknown id answer 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "financing_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: FinancingSecuritiesResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/financings/:ref_id/activity",
+    alias: "get_financing_activity",
+    description: `The entity&#x27;s own events (its comments included), newest first, values masked.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
+    ],
+    response: CaseActivityResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/financings/:ref_id/comments",
+    alias: "list_financing_comments",
+    description: `Newest first. Bank-only: every comment is internal, and the leasing company never
+reaches the thread (404).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(100),
+      },
+    ],
+    response: CaseCommentListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/financings/:ref_id/comments",
+    alias: "add_financing_comment",
+    description: `Always stored as internal, whatever &#x60;&#x60;visibility&#x60;&#x60; says: the thread is bank-only.
+Audited on the entity itself, so it appears in its Activity trail.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: AddCaseCommentRequest,
+      },
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/financings/:ref_id/comments/:comment_id",
+    alias: "edit_financing_comment",
+    description: `Author only (403 otherwise); a deleted comment cannot be edited (409).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ body: z.string().min(1).max(2000) }).passthrough(),
+      },
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "comment_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/financings/:ref_id/comments/:comment_id",
+    alias: "delete_financing_comment",
+    description: `Author only (403 otherwise); a second delete is refused (409). The tombstone is returned.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "comment_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/financings/export-csv",
+    alias: "export_financings_csv_api_v1_financings_export_csv_get",
+    description: `Export the filtered financings inventory as CSV (PRD1042-1949, US 1.33). P30-40: the list&#x27;s columns in
+its order (&#x60;&#x60;EXPORT_COLUMNS&#x60;&#x60;, Account no. included since US-1.66), its filters and sort; every cell is safe from
+formula injection (&#x60;&#x60;csv_cell&#x60;&#x60;). The export is
+audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leaving the system is an access event.`,
+    requestFormat: "json",
+    parameters: [
+      {
         name: "sort",
         type: "Query",
         schema: z.string().optional().default("-created_at"),
       },
+      {
+        name: "search",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: z.array(FinancingStatus).optional().default([]),
+      },
+      {
+        name: "kind",
+        type: "Query",
+        schema: z.array(FinancingKind).optional().default([]),
+      },
+      {
+        name: "financing_reference",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "loan_account",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "lc_partner_id",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "account_no",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "outstanding",
+        type: "Query",
+        schema: z.boolean().optional().default(false),
+      },
     ],
     response: z.unknown(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/financings/filter-options",
+    alias: "list_financing_filter_options_api_v1_financings_filter_options_get",
+    description: `The values one financing-list dropdown offers (P29-15, prototype &#x60;&#x60;finFxValues&#x60;&#x60;): the tenant&#x27;s
+distinct financing references, loan accounts, leasing companies or account numbers (US-1.66 — the payout
+accounts the framework agreements designate), narrowed by &#x60;&#x60;q&#x60;&#x60; (contains, case and spaces ignored), sorted,
+at most 50. Same roles as the list (FO / BO / BPU); everyone else 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "field",
+        type: "Query",
+        schema: z
+          .string()
+          .regex(/^(reference|loan_account|leasing_company|account_no)$/),
+      },
+      {
+        name: "q",
+        type: "Query",
+        schema: assignee_id,
+      },
+    ],
+    response: FinancingFilterOptionsResponse,
     errors: [
       {
         status: 422,
@@ -10606,12 +12311,26 @@ audited (&#x60;&#x60;FINANCING_LIST_EXPORTED&#x60;&#x60;) — an inventory leavi
     method: "get",
     path: "/api/v1/framework-agreements/:id/financings",
     alias: "get_fa_financings_api_v1_framework_agreements__id__financings_get",
+    description: `BUG-141 — the financings drawn under this agreement (newest first, paged): reference, kind, contract
+count, payout amount, status, ended reason. Bank Power User, Front Office and Back Office; 404 otherwise,
+and for an agreement outside the tenant. Until BUG-146 links every financing to its agreement, only seeded
+financings carry the link.`,
     requestFormat: "json",
     parameters: [
       {
         name: "id",
         type: "Path",
         schema: z.string().uuid(),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(25),
       },
     ],
     response: FALinkedFinancingsResponse,
@@ -11069,7 +12788,8 @@ Returns 404 if the action does not exist or the caller is not the initiator (no 
     alias: "list_lc_cases_api_v1_lc_cases_get",
     description: `The leasing company&#x27;s own cases (its raised proposals and any the bank has since taken over).
 
-Defaults to newest-first (&#x60;&#x60;oldest_first&#x3D;False&#x60;&#x60;), unlike the bank&#x27;s queue-oriented &#x60;&#x60;/cases&#x60;&#x60;.
+Defaults to newest-first (&#x60;&#x60;sort&#x3D;-created_at&#x60;&#x60;), unlike the bank&#x27;s queue-oriented &#x60;&#x60;/cases&#x60;&#x60;;
+every column sorts both ways (P30-35, &#x60;&#x60;sort&#x60;&#x60;).
 
 **Answers &#x60;LcCaseListResponse&#x60;, not the bank&#x27;s &#x60;CaseListResponse&#x60; (changed 2026-09-11).** This
 route used to reuse the bank list model as &quot;a thin, clearly-named alias&quot;, which handed a
@@ -11083,9 +12803,19 @@ least-privilege; only the list had been aliased.`,
     requestFormat: "json",
     parameters: [
       {
-        name: "oldest_first",
+        name: "sort",
         type: "Query",
-        schema: z.boolean().optional().default(false),
+        schema: z.string().optional().default("-created_at"),
+      },
+      {
+        name: "search",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "status",
+        type: "Query",
+        schema: status__2,
       },
       {
         name: "limit",
@@ -11099,6 +12829,32 @@ least-privilege; only the list had been aliased.`,
       },
     ],
     response: LcCaseListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/lc/cases",
+    alias: "start_lc_case_api_v1_lc_cases_post",
+    description: `The leasing company starts a refinancing request (BUG-072; was &#x60;&#x60;POST /cases&#x60;&#x60;).
+
+The same service as the bank&#x27;s start (&#x60;&#x60;CaseService.create_case&#x60;&#x60;: refinancing requests only, the company
+from the caller, never the body), answered with the leasing company&#x27;s own projection — no owner, round,
+routing or financing field is sent. Leasing-company users only; any other role 404; anonymous 401.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: StartCaseRequest,
+      },
+    ],
+    response: LcCaseDetailResponse,
     errors: [
       {
         status: 422,
@@ -11141,9 +12897,286 @@ separate &#x60;&#x60;GET /lc/obligations/{case_id}&#x60;&#x60;; the bank↔LC co
     ],
   },
   {
+    method: "post",
+    path: "/api/v1/lc/cases/:case_id/discard",
+    alias: "discard_lc_draft_api_v1_lc_cases__case_id__discard_post",
+    description: `The leasing company discards its own draft (P30-33, client round 2, point 10).
+
+No body. **Only a Draft request**; past Draft (Submitted, Missing information, Rework, …) or a
+closed case → 409 &#x60;&#x60;CASE_NOT_DISCARDABLE&#x60;&#x60;, nothing changed. Own company only — another company&#x27;s,
+an unknown or an already-discarded case → 404; any bank role → 404 (the portal route confirms
+nothing to it); anonymous → 401. Answers 204: the draft leaves every leasing-company list, count and
+read. The bank still holds it — case, request, financing and contracts Cancelled through the
+existing cascade, with a &#x60;&#x60;case.draft_discarded&#x60;&#x60; activity entry. Nothing is deleted.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "put",
+    path: "/api/v1/lc/cases/:case_id/leasing-company",
+    alias: "bind_lc_own_company_api_v1_lc_cases__case_id__leasing_company_put",
+    description: `The leasing company binds its own company to its request — wizard step 1 (BUG-072; was
+&#x60;&#x60;PUT /cases/{id}/leasing-company&#x60;&#x60;). The same service and rules as the bank&#x27;s bind (own company only,
+else 404; only while Draft or Missing information, else 409 &#x60;&#x60;LC_REQUEST_LOCKED&#x60;&#x60;; 422
+&#x60;&#x60;CASE_LC_UNRESOLVED&#x60;&#x60;), answered with the leasing company&#x27;s own projection.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: BindLeasingCompanyRequest,
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: LcCaseDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/lc/cases/:case_id/resubmit",
+    alias: "resubmit_lc_case_api_v1_lc_cases__case_id__resubmit_post",
+    description: `The leasing company sends its own request again after Missing information (US-1.96, Rule 06
+§9.1 C16, §2.2.5).
+
+Step 4&#x27;s Move back hands the data to the leasing company; once corrected, it resubmits here. Own
+company only (the lookup is LC-scoped — another company&#x27;s case is 404); from Missing information
+only — a Rework is the bank&#x27;s internal return and answers 404 (R8); a request not returned → 409;
+the first-submission checks run (422 with the failed checks). No body. Answers with the LC&#x27;s own
+projection, so no bank-internal field is returned. Held for the demo&#x27;s confirmation of A-5 (K13).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: LcCaseDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/lc/cases/:case_id/review",
+    alias: "review_lc_request_api_v1_lc_cases__case_id__review_get",
+    description: `The leasing company&#x27;s one-page review of its own request before submission (BUG-072; was
+&#x60;&#x60;GET /cases/{id}/review&#x60;&#x60;). The case block is its own projection; the bank&#x27;s financing block is not part
+of the model at all; the agreement block keeps its LC visibility rule. Own company only — another
+company&#x27;s case, an unknown or a discarded one is 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: LcCaseReviewResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/lc/cases/:case_id/submit",
+    alias: "submit_lc_request_api_v1_lc_cases__case_id__submit_post",
+    description: `The leasing company submits its own request (BUG-072; was &#x60;&#x60;POST /cases/{id}/submit&#x60;&#x60;). The same
+service and gates (a failed submission answers 422 with the typed &#x60;&#x60;failed_checks&#x60;&#x60;; not in Draft → 409),
+answered with the leasing company&#x27;s own projection.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: LcCaseDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/lc/cases/:case_id/withdrawal-notice",
+    alias:
+      "signal_lc_withdrawal_api_v1_lc_cases__case_id__withdrawal_notice_post",
+    description: `The leasing company tells the bank it is withdrawing (P29-11, client round 2, point 10).
+
+Body &#x60;&#x60;{&quot;message&quot;: str | null}&#x60;&#x60; (optional, up to 2000 characters, stored as typed; blank &#x3D; none).
+**No status changes** — the bank records the withdrawal. Writes a &#x60;&#x60;case.withdrawal_signalled&#x60;&#x60;
+activity entry and, when a message is given, that message as an (external) comment on the case
+thread. Only past Draft and while the case is open; a Draft or a closed case → 409
+&#x60;&#x60;CASE_WITHDRAWAL_NOT_OFFERED&#x60;&#x60;, nothing written. Own company only — another company&#x27;s, an unknown
+or a discarded case → 404; any bank role → 404; anonymous → 401; a message over 2000 → 422.
+Answers 204.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: LcWithdrawalNoticeRequest,
+      },
+      {
+        name: "case_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: z.void(),
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/lc/cases/summary",
+    alias: "read_lc_portal_summary_api_v1_lc_cases_summary_get",
+    description: `The leasing company&#x27;s dashboard figures — open requests and drafts — over all of its own cases.
+
+Counted by one grouped query in the database (never by loading cases), scoped exactly like
+&#x60;&#x60;GET /lc/cases&#x60;&#x60;: the tenant, the caller&#x27;s own company, a discarded draft gone. A case counts
+under the badge the portal list gives it. A caller without a leasing-company binding (any bank
+role) answers not-found, as on the list.`,
+    requestFormat: "json",
+    response: LcPortalSummaryResponse,
+  },
+  {
+    method: "get",
+    path: "/api/v1/lc/comment-notifications",
+    alias: "list_lc_comment_notifications_api_v1_lc_comment_notifications_get",
+    description: `The leasing-company user&#x27;s bell (US-1.113, rule 06 §4.4.1, AC1): one entry per own case on
+which the bank left it a comment it has not marked as seen, newest first, at most 20. Each entry
+names the newest such comment&#x27;s author and time. Any bank role answers 404.`,
+    requestFormat: "json",
+    response: LcCommentNotificationListResponse,
+  },
+  {
+    method: "get",
+    path: "/api/v1/lc/document-types",
+    alias: "list_portal_document_types_api_v1_lc_document_types_get",
+    description: `The types a party document can be uploaded under from the portal — requested types only.`,
+    requestFormat: "json",
+    response: PortalDocumentTypesResponse,
+  },
+  {
+    method: "get",
+    path: "/api/v1/lc/financings",
+    alias: "list_lc_financings_api_v1_lc_financings_get",
+    description: `The leasing company&#x27;s own financings (P29-14, P30-32; approved prototype &#x60;&#x60;vPortalFinancings&#x60;&#x60;).
+
+Only its own company&#x27;s financings that **passed commitment**, in the portal&#x27;s own status wording
+(In progress · Committed · Paid out · Running · Ended · Cancelled — Draft, Run-out and any unmapped
+status are not listed); a Cancelled one only when it was cancelled after commitment. Filtered in the
+query, never in the interface: search (financing number), framework agreement, portal status
+(several). Every column sorts (&#x60;&#x60;sort&#x60;&#x60;). The row is the portal&#x27;s projection — reference, kind,
+framework agreement name, contract count, portal status, and from the payout on the payout date,
+amount and outstanding balance (off the stored plan) — with no status code, product template, rate
+or loan field (rule 03 D3). A row does not open: the financing detail stays bank-only.
+Leasing-company users only; a user without a company binding and every other role answer 404
+(non-disclosure); an unknown sort key 422.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "search",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "portal_status",
+        type: "Query",
+        schema: z.array(PortalFinancingStatus).optional().default([]),
+      },
+      {
+        name: "framework_agreement_id",
+        type: "Query",
+        schema: assignee_id,
+      },
+      {
+        name: "sort",
+        type: "Query",
+        schema: z.string().optional().default("-created_at"),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(100).optional().default(25),
+      },
+    ],
+    response: LcFinancingListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/lc/financings/framework-agreements",
+    alias:
+      "list_lc_financing_agreements_api_v1_lc_financings_framework_agreements_get",
+    description: `P30-32 — the framework agreements the leasing company&#x27;s listed financings name, by name: the
+choices of its Framework agreement filter. Its own company&#x27;s only; every other role 404.`,
+    requestFormat: "json",
+    response: LcFinancingAgreementOptionsResponse,
+  },
+  {
     method: "get",
     path: "/api/v1/lc/obligations/:business_object_id",
     alias: "get_lc_obligations_api_v1_lc_obligations__business_object_id__get",
+    description: `The leasing company&#x27;s own document obligations for one case (&quot;Documents the bank needs&quot;).
+
+Leasing-company users only. Requirements the **bank generates** (the calculation data sheet, the loan
+offer, …) are not on the list — left out in the read, not hidden in the UI (P30-34, client round 2
+point 7); the bank&#x27;s runtime view keeps them.`,
     requestFormat: "json",
     parameters: [
       {
@@ -11168,6 +13201,36 @@ separate &#x60;&#x60;GET /lc/obligations/{case_id}&#x60;&#x60;; the bank↔LC co
       },
     ],
     response: LCObligationResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/lc/partners/:id/documents",
+    alias:
+      "upload_portal_partner_document_api_v1_lc_partners__id__documents_post",
+    description: `Store a document against a party this leasing company created. Multipart, like the bank&#x27;s
+upload; a party it did not create answers 404, the same as an unknown id.`,
+    requestFormat: "form-data",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema:
+          Body_upload_portal_partner_document_api_v1_lc_partners__id__documents_post,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerDocumentItem,
     errors: [
       {
         status: 422,
@@ -12003,6 +14066,83 @@ bytes really are that format before anything is stored.`,
     ],
   },
   {
+    method: "put",
+    path: "/api/v1/partners/:id/os-plus",
+    alias: "edit_os_plus_api_v1_partners__id__os_plus_put",
+    description: `The OS+ person number on its own (P30-50) — maintained by the Power User, Front Office and Back
+Office (the PM&#x27;s answer of 5 Oct, point 2), with the dealer numbers&#x27; permission. It is the Power
+User&#x27;s way in: Edit party stays Front and Back Office (P30-18). &#x60;&#x60;null&#x60;&#x60; clears the number; a
+change is one &#x60;&#x60;PARTNER_UPDATED&#x60;&#x60; Activity entry, before → after. Returns the page detail with the
+new &#x60;&#x60;version&#x60;&#x60;.
+
+* 409 &#x60;&#x60;PARTNER_VERSION_CONFLICT&#x60;&#x60; — &#x60;&#x60;version&#x60;&#x60; is not the party&#x27;s; &#x60;&#x60;PARTY_NOT_EDITABLE&#x60;&#x60; — the
+  party is not confirmed.
+* 422 — a value longer than 50 characters, or a missing &#x60;&#x60;version&#x60;&#x60;.
+* 404 — an unknown party or another tenant&#x27;s. Nothing is written on any refusal.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: OsPlusEditRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "put",
+    path: "/api/v1/partners/:id/party",
+    alias: "edit_party_api_v1_partners__id__party_put",
+    description: `Edit party (P30-18; M2 spec §6.3) — the partner page&#x27;s edit mode saved in one transaction.
+
+Front Office and Back Office only (not the Power User, M2 spec §2). Writes directly, without the
+Back Office approval of identifier changes; every changed value is logged before → after (one
+Activity entry per field), and a changed CREFO / Schufa / VAT ID re-runs the duplicate check on
+that anchor (a pending pair, nothing blocked). Returns the page detail with the new &#x60;&#x60;version&#x60;&#x60;.
+
+* 409 &#x60;&#x60;PARTNER_VERSION_CONFLICT&#x60;&#x60; — &#x60;&#x60;version&#x60;&#x60; is not the party&#x27;s (someone saved in between);
+  &#x60;&#x60;PARTY_NOT_EDITABLE&#x60;&#x60; — the party is not confirmed (draft / pending: &#x60;&#x60;PATCH /partners/{id}&#x60;&#x60;;
+  rejected / merged / archived: final); &#x60;&#x60;PARTNER_ADDRESS_RETIRED&#x60;&#x60; / &#x60;&#x60;…_LAST_ACTIVE&#x60;&#x60; from the
+  address changes.
+* 422 &#x60;&#x60;PARTNER_TYPE_LOCKED&#x60;&#x60; — a different party type; &#x60;&#x60;PARTNER_DEALER_NUMBER_REQUIRED&#x60;&#x60; — a
+  leasing company without a dealer number; field formats (4-digit dealer numbers, …).
+* 404 — an unknown party, another tenant&#x27;s, or an address that is not the party&#x27;s. Nothing is
+  written on any refusal.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PartyEditRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerDetailResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
     method: "post",
     path: "/api/v1/partners/:id/reject",
     alias: "reject_partner_api_v1_partners__id__reject_post",
@@ -12055,7 +14195,8 @@ bytes really are that format before anything is stored.`,
     method: "post",
     path: "/api/v1/partners/:id/relationships",
     alias: "add_partner_relationship_api_v1_partners__id__relationships_post",
-    description: `Record one edge. PARTNER_EDIT — partner master data, the right its creators already hold.`,
+    description: `Record one edge — Front Office and Back Office only (P30-21, M2 spec §2:
+PARTNER_RELATIONSHIP_MANAGE; the Power User keeps PARTNER_EDIT but not this).`,
     requestFormat: "json",
     parameters: [
       {
@@ -12170,29 +14311,61 @@ bytes really are that format before anything is stored.`,
   },
   {
     method: "get",
-    path: "/api/v1/partners/assessment-catalogue",
-    alias: "get_assessment_catalogue_api_v1_partners_assessment_catalogue_get",
-    requestFormat: "json",
-    response: AssessmentCatalogueResponse,
-  },
-  {
-    method: "post",
-    path: "/api/v1/partners/duplicates/:id/resolve",
-    alias: "resolve_duplicate_api_v1_partners_duplicates__id__resolve_post",
+    path: "/api/v1/partners/:ref_id/activity",
+    alias: "get_party_activity",
+    description: `The entity&#x27;s own events (its comments included), newest first, values masked.`,
     requestFormat: "json",
     parameters: [
       {
-        name: "body",
-        type: "Body",
-        schema: ResolveDuplicatePairRequest,
-      },
-      {
-        name: "id",
+        name: "ref_id",
         type: "Path",
         schema: z.string().uuid(),
       },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(50),
+      },
     ],
-    response: ResolveDuplicatePairResponse,
+    response: CaseActivityResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/:ref_id/comments",
+    alias: "list_party_comments",
+    description: `Newest first. Bank-only: every comment is internal, and the leasing company never
+reaches the thread (404).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "page",
+        type: "Query",
+        schema: z.number().int().gte(1).optional().default(1),
+      },
+      {
+        name: "per_page",
+        type: "Query",
+        schema: z.number().int().gte(1).lte(200).optional().default(100),
+      },
+    ],
+    response: CaseCommentListResponse,
     errors: [
       {
         status: 422,
@@ -12203,17 +14376,172 @@ bytes really are that format before anything is stored.`,
   },
   {
     method: "post",
-    path: "/api/v1/partners/merge",
-    alias: "initiate_merge_api_v1_partners_merge_post",
+    path: "/api/v1/partners/:ref_id/comments",
+    alias: "add_party_comment",
+    description: `Always stored as internal, whatever &#x60;&#x60;visibility&#x60;&#x60; says: the thread is bank-only.
+Audited on the entity itself, so it appears in its Activity trail.`,
     requestFormat: "json",
     parameters: [
       {
         name: "body",
         type: "Body",
-        schema: MergeInitiateRequest,
+        schema: AddCaseCommentRequest,
+      },
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
       },
     ],
-    response: MergeInitiateResponse,
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "patch",
+    path: "/api/v1/partners/:ref_id/comments/:comment_id",
+    alias: "edit_party_comment",
+    description: `Author only (403 otherwise); a deleted comment cannot be edited (409).`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: z.object({ body: z.string().min(1).max(2000) }).passthrough(),
+      },
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "comment_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "delete",
+    path: "/api/v1/partners/:ref_id/comments/:comment_id",
+    alias: "delete_party_comment",
+    description: `Author only (403 otherwise); a second delete is refused (409). The tombstone is returned.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "ref_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+      {
+        name: "comment_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: CaseCommentItem,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/assessment-catalogue",
+    alias: "get_assessment_catalogue_api_v1_partners_assessment_catalogue_get",
+    requestFormat: "json",
+    response: AssessmentCatalogueResponse,
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/duplicates/:id/keep-apart",
+    alias:
+      "keep_duplicate_apart_api_v1_partners_duplicates__id__keep_apart_post",
+    description: `The two are different parties: the pair is kept apart (&#x60;&#x60;confirmed_distinct&#x60;&#x60;) and suppressed.
+An unknown pair → 404; an already resolved pair → 409.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: DuplicateKeepApartRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DuplicateResolutionResultResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/partners/duplicates/:id/merge",
+    alias: "merge_duplicate_pair_api_v1_partners_duplicates__id__merge_post",
+    description: `The survivor stays; the other record is retired (stays readable) and its roles and references
+move to the survivor tenant-wide, in one transaction. A survivor outside the pair → 422; a record
+named as a leasing company → 409; an unknown pair → 404; an already resolved pair → 409.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: DuplicateMergeRequest,
+      },
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DuplicateResolutionResultResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/partners/duplicates/:id/resolution",
+    alias:
+      "get_duplicate_resolution_api_v1_partners_duplicates__id__resolution_get",
+    description: `The pair, and each record with the roles it plays on live contracts — the survivor cards and
+the merge preview (survivor, retired, roles that move). An unknown pair → 404.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: DuplicatePairResolutionResponse,
     errors: [
       {
         status: 422,
@@ -13250,7 +15578,7 @@ No existing sessions are invalidated immediately.
       {
         name: "origin",
         type: "Query",
-        schema: origin__2,
+        schema: origin,
       },
       {
         name: "role_scope",
@@ -13448,6 +15776,9 @@ Requires &#x60;system_admin&#x60; role.`,
     method: "post",
     path: "/api/v1/tenants/:tenant_id/partners",
     alias: "submit_partner_api_v1_tenants__tenant_id__partners_post",
+    description: `Submit a partner as Draft. No screen calls this since P30-17 (the register&#x27;s New party uses
+&#x60;&#x60;…/capture&#x60;&#x60;); it keeps the party mask&#x27;s roles, FO + BO, so no role creates a party here that
+the screens do not allow.`,
     requestFormat: "json",
     parameters: [
       {
@@ -13492,9 +15823,14 @@ Requires &#x60;system_admin&#x60; role.`,
         schema: z.array(PartnerStatus).optional().default([]),
       },
       {
+        name: "partner_type",
+        type: "Query",
+        schema: z.array(PartnerType).optional().default([]),
+      },
+      {
         name: "role",
         type: "Query",
-        schema: z.array(PartnerRole).optional().default([]),
+        schema: z.array(RegistryRole).optional().default([]),
       },
       {
         name: "country",
@@ -13517,6 +15853,11 @@ Requires &#x60;system_admin&#x60; role.`,
         schema: z.boolean().optional().default(false),
       },
       {
+        name: "sort",
+        type: "Query",
+        schema: z.string().optional().default("-created_at"),
+      },
+      {
         name: "limit",
         type: "Query",
         schema: z.number().int().gte(1).lte(100).optional().default(20),
@@ -13528,6 +15869,37 @@ Requires &#x60;system_admin&#x60; role.`,
       },
     ],
     response: PartnerListResponse,
+    errors: [
+      {
+        status: 422,
+        description: `Validation Error`,
+        schema: HTTPValidationError,
+      },
+    ],
+  },
+  {
+    method: "post",
+    path: "/api/v1/tenants/:tenant_id/partners/capture",
+    alias: "capture_partner_api_v1_tenants__tenant_id__partners_capture_post",
+    description: `New party in the partner register (P30-17): the one party mask, the same outcome as the
+contract form&#x27;s Create party. Creates the party **confirmed** with its addresses and dealer
+numbers in one transaction (201); a duplicate hit opens an advisory pair and never
+blocks. An exact match to a confirmed partner returns that partner untouched (200), unless
+&#x60;&#x60;keep_both&#x60;&#x60;. FO + BO.`,
+    requestFormat: "json",
+    parameters: [
+      {
+        name: "body",
+        type: "Body",
+        schema: PartnerCaptureRequest,
+      },
+      {
+        name: "tenant_id",
+        type: "Path",
+        schema: z.string().uuid(),
+      },
+    ],
+    response: PartnerCaptureResponse,
     errors: [
       {
         status: 422,
@@ -13561,6 +15933,8 @@ Requires &#x60;system_admin&#x60; role.`,
     method: "post",
     path: "/api/v1/tenants/:tenant_id/partners/match",
     alias: "match_partner_api_v1_tenants__tenant_id__partners_match_post",
+    description: `The party mask&#x27;s Check for duplicates (register New party, and the contract form before its
+contract exists) — FO + BO, the mask&#x27;s roles (P30-17). Creates nothing.`,
     requestFormat: "json",
     parameters: [
       {
@@ -14200,6 +16574,19 @@ and returns 202 with a new job_id.`,
         schema: HTTPValidationError,
       },
     ],
+  },
+  {
+    method: "get",
+    path: "/api/v1/users/me/detail",
+    alias: "get_me_detail_api_v1_users_me_detail_get",
+    description: `Return the full detail of the currently authenticated user — the shape of &#x60;GET /{id}&#x60;
+(tenant name, invited by, approved by), for the user&#x27;s own profile page.
+
+**Requirements:** Valid &#x60;access_token&#x60; HTTP-only cookie. No permission beyond being signed in:
+every role reads its own record here, a leasing-company user included, while &#x60;GET /{id}&#x60;
+stays behind &#x60;user:read&#x60;. There is no id parameter, so only the caller&#x27;s record is returned.`,
+    requestFormat: "json",
+    response: UserDetailResponse,
   },
   {
     method: "get",

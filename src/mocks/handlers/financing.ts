@@ -33,6 +33,12 @@ import {
   FinancingListResponseSchema,
 } from "@/features/financing/api/financingListSchema"
 import { mockCases } from "@/mocks/fixtures/cases"
+import {
+  FinancingCollateralSchema,
+  FinancingDetailSchema,
+  FinancingSecuritiesResponseSchema,
+} from "@/features/financing/api/financingDetailSchema"
+import { FinancingStatusSchema } from "@/features/financing/api/financingListSchema"
 import { mockUuid } from "@/mocks/uuid"
 import { envelope, errorEnvelope } from "@/mocks/envelope"
 import { API } from "@/mocks/apiBase"
@@ -168,7 +174,347 @@ function financingRecord(caseId: string) {
   }
 }
 
+/**
+ * The financing ids the list hands out, and the case each one belongs to.
+ *
+ * Built from the same derivation the list uses, so a row and the detail it opens can never
+ * disagree about which case a financing came out of.
+ */
+function mockFinancingIndex(): Array<{ id: string; caseId: string }> {
+  return mockCases
+    .filter(row => mockFinancingFor(row.id) !== undefined)
+    .map((row, index) => ({
+      id: mockUuid(`f1${index.toString(16).padStart(2, "0")}`),
+      caseId: row.id,
+    }))
+}
+
+/** Session-scoped edits of the values a person maintains by hand. */
+const maintainedByFinancingId: Record<
+  string,
+  {
+    loan_number: string | null
+    loan_account: string | null
+    soll_amount: string | null
+    soll_date: string | null
+    haben_amount: string | null
+    haben_date: string | null
+    updated_at: string
+  }
+> = {}
+
+function mockRepaymentRows(): unknown[] {
+  // Six rows around today's position, which is what the schedule shows: the payout, three
+  // instalments behind, the current one, and one still to come.
+  const rows = [
+    [
+      "2026-06-01",
+      "6253.22",
+      "5812.40",
+      "440.82",
+      "385925.63",
+      null,
+      false,
+      false,
+    ],
+    [
+      "2026-07-01",
+      "6253.22",
+      "5834.90",
+      "418.32",
+      "380090.73",
+      null,
+      false,
+      false,
+    ],
+    [
+      "2026-08-01",
+      "6253.22",
+      "5857.52",
+      "395.70",
+      "372868.01",
+      null,
+      true,
+      false,
+    ],
+    [
+      "2026-09-01",
+      "6253.22",
+      "5880.26",
+      "372.96",
+      "366987.75",
+      null,
+      false,
+      true,
+    ],
+    [
+      "2026-10-01",
+      "6253.22",
+      "5903.13",
+      "350.09",
+      "361084.62",
+      null,
+      false,
+      true,
+    ],
+    [
+      "2026-11-01",
+      "6253.22",
+      "5926.12",
+      "327.10",
+      "355158.50",
+      null,
+      false,
+      true,
+    ],
+  ] as const
+  return rows.map(row => ({
+    due_date: row[0],
+    payment: row[1],
+    principal: row[2],
+    interest: row[3],
+    closing_balance: row[4],
+    kind: row[5],
+    is_current: row[6],
+    is_future: row[7],
+  }))
+}
+
+function mockFinancingDetail(financingId: string, caseId: string) {
+  const row = mockCases.find(entry => entry.id === caseId)
+  const overview = mockFinancingFor(caseId)
+  const held = maintainedByFinancingId[financingId]
+  // The OS+ pair exists from the moment the loan is set up there — which on this fixture's own
+  // status set means disbursed or later.
+  const isSetUp =
+    overview?.status === FinancingStatusSchema.enum.disbursed ||
+    overview?.status === FinancingStatusSchema.enum.active
+
+  return FinancingDetailSchema.parse({
+    id: financingId,
+    case_id: caseId,
+    financing_reference:
+      overview?.financing_reference ??
+      (row?.case_reference ?? "RR-0000-000").replace("RR", "FIN"),
+    framework_agreement_id: mockUuid("fa01"),
+    product_template_id: null,
+    product_template_version: null,
+    kind: (row?.contract_count ?? 0) > 1 ? "package" : "single",
+    refinancing_rate: overview?.refinancing_rate ?? "4.650",
+    refinancing_quota_override: null,
+    effective_quota: "97.00",
+    value_date: "2026-08-01",
+    first_instalment_date: "2026-09-01",
+    instalment_day: 1,
+    default_instalment_day: 1,
+    rate_quoted_on: "2026-07-24",
+    agreed_loan_amount: "423171.22",
+    committed_rate: "4.650",
+    committed_rate_expiry: "2026-07-31",
+    rate_lock_days: 7,
+    settlement_ready: true,
+    calculation_blockers: [],
+    calculation_state: "calculated",
+    calculation_version: 1,
+    calculated_at: "2026-07-24T10:00:00Z",
+
+    // Only once the loan is set up in OS+ — which is the rule the record states rather than the
+    // UI deriving it from the status.
+    loan_number: held?.loan_number ?? (isSetUp ? "LIQ-88-014772" : null),
+    loan_account: held?.loan_account ?? (isSetUp ? "0092 118 4471" : null),
+    loan_values_editable: isSetUp,
+
+    status: overview?.status ?? "active",
+    ended_reason: null,
+    created_by: "00000000-0000-4000-8000-000000000005",
+    created_at: row?.created_at ?? "2026-07-10T09:00:00Z",
+
+    case_reference: row?.case_reference ?? "—",
+    lc_partner_id: "00000000-0000-4000-8000-00000000a001",
+    lc_partner_name: row?.lc_partner_name ?? null,
+    framework_agreement_name: "Premium Leasing — master refinancing 2025",
+    product_template_name: "Standard lease refinancing, v4",
+    product_template_version_number: "4",
+
+    soll_amount: held?.soll_amount ?? "108500.00",
+    soll_date: held?.soll_date ?? "2026-06-12",
+    // Not recorded: the Outstanding case the prototype's list filters on — a debit booked with no
+    // matching credit yet.
+    haben_amount: held?.haben_amount ?? null,
+    haben_date: held?.haben_date ?? null,
+
+    updated_at: held?.updated_at ?? "2026-08-06T14:22:00Z",
+
+    // Read off the same sources the tabs render, so a count can never disagree with the tab it
+    // labels — a fixed number here said "Covenants 1" over a panel showing two.
+    counts: {
+      contracts: row?.contract_count ?? 1,
+      collaterals: 2,
+      covenants: seedConditions(caseId).length,
+      redemptions: 0,
+    },
+    balance: {
+      outstanding: "372868.01",
+      as_of: "2026-08-28",
+      payout: "423171.22",
+      approved_loan_amount: "423171.22",
+      provisional: overview?.status === "calculating",
+    },
+    repayment: {
+      rows: mockRepaymentRows(),
+      instalment: "6253.22",
+      instalments_due: 11,
+      instalment_count: 12,
+      repayment_start: "2026-09-01",
+      final_instalment: "372868.01",
+      residual: "372868.00",
+      maturity: "2027-08-01",
+      total_interest: "18482.21",
+      outstanding: "372868.01",
+      adjusted_for_redemptions: false,
+      early_redemption_case_id: null,
+    },
+    contract_shares: [],
+  })
+}
+
 export const financingHandlers = [
+  /**
+   * The financing's own record — the route that gave the financing an address of its own.
+   *
+   * The detail is denormalised, so the header resolves no names: the case reference, the leasing
+   * company, the framework agreement and the product template all arrive with it.
+   */
+  http.get(`${API}/financings/:financingId`, ({ params }) => {
+    const financingId = params.financingId as string
+    const match = mockFinancingIndex().find(entry => entry.id === financingId)
+    if (match === undefined)
+      return errorEnvelope("NOT_FOUND", "No such financing", 404)
+    return envelope(mockFinancingDetail(financingId, match.caseId))
+  }),
+
+  /**
+   * The values a person maintains by hand.
+   *
+   * `expected_updated_at` is the optimistic lock, and the mock enforces it: a stale token is
+   * refused rather than overwritten, which is the only way the screen's conflict path can ever be
+   * exercised before the real backend is reachable.
+   */
+  http.patch(
+    `${API}/financings/:financingId/maintained-values`,
+    async ({ params, request }) => {
+      const financingId = params.financingId as string
+      const match = mockFinancingIndex().find(entry => entry.id === financingId)
+      if (match === undefined)
+        return errorEnvelope("NOT_FOUND", "No such financing", 404)
+
+      const body = (await request.json()) as Record<string, unknown>
+      const current = maintainedByFinancingId[financingId]
+      const expected = current?.updated_at ?? "2026-08-06T14:22:00Z"
+      if (body.expected_updated_at !== expected)
+        return errorEnvelope(
+          "CONFLICT",
+          "The financing has changed since this screen loaded. Reload and try again.",
+          409
+        )
+
+      const before = mockFinancingDetail(financingId, match.caseId)
+      const key = (field: string, fallback: string | null) =>
+        field in body ? ((body[field] as string | null) ?? null) : fallback
+
+      maintainedByFinancingId[financingId] = {
+        loan_number: key("loan_number", before.loan_number),
+        loan_account: key("loan_account", before.loan_account),
+        soll_amount: key("soll_amount", before.soll_amount),
+        soll_date: key("soll_date", before.soll_date),
+        haben_amount: key("haben_amount", before.haben_amount),
+        haben_date: key("haben_date", before.haben_date),
+        updated_at: new Date().toISOString(),
+      }
+      return envelope(
+        mockFinancingDetail(financingId, match.caseId),
+        "MAINTAINED_VALUES_UPDATED"
+      )
+    }
+  ),
+
+  http.get(`${API}/financings/:financingId/collateral`, ({ params }) =>
+    envelope(
+      FinancingCollateralSchema.parse({
+        id: mockUuid("c011"),
+        financing_id: params.financingId as string,
+        collateral_type: "chattel_mortgage",
+        current_total_eur: "498000.00",
+        // Nothing waiting: the proposal path is reached by re-determining, not seeded into it.
+        proposed_total_eur: null,
+        evidence: [
+          {
+            document_id: mockUuid("c0e1"),
+            file_name: "DAT_Gutachten_M-MN8842.pdf",
+            size: 284_112,
+            uploaded_at_utc: "2026-07-22T08:14:00Z",
+            uploaded_at_local: "2026-07-22T10:14:00",
+          },
+        ],
+        // Raised by the partial redemption on this package — and only an approved
+        // re-determination clears it.
+        recheck_state: "needs_recheck",
+        redetermined_by: null,
+        redetermined_by_name: null,
+        redetermined_at: null,
+        confirmed_by: "00000000-0000-4000-8000-000000000003",
+        confirmed_by_name: "Petra Lang",
+        confirmed_at: "2026-07-22T11:02:00Z",
+        decision_block: null,
+        value_history: [
+          {
+            total_eur: "498000.00",
+            set_by: "00000000-0000-4000-8000-000000000005",
+            set_by_name: "A. Berger",
+            set_at: "2026-07-22T10:40:00Z",
+          },
+        ],
+      })
+    )
+  ),
+
+  http.get(`${API}/financings/:financingId/securities`, ({ params }) =>
+    envelope(
+      FinancingSecuritiesResponseSchema.parse({
+        financing_id: params.financingId as string,
+        items: [
+          {
+            collateral_id: mockUuid("c0a1"),
+            collateral_type: "guarantee",
+            value: "150000.00",
+            guarantor_partner_id: "00000000-0000-4000-8000-00000000a005",
+            guarantor_display_name: "Josef Müller",
+            evidence_document_id: mockUuid("c0a2"),
+            evidence_document_name: "Buergschaftserklaerung.pdf",
+            evidence_document_date: "2026-07-18",
+            kind_of_obligation: "guarantor",
+            contract_id: mockUuid("c0b1"),
+            contract_number: "PL-2026-00412",
+          },
+          {
+            // No proof filed — the row has to say so rather than read as complete.
+            collateral_id: mockUuid("c0a3"),
+            collateral_type: "assignment_of_receivables",
+            value: null,
+            guarantor_partner_id: null,
+            guarantor_display_name: null,
+            evidence_document_id: null,
+            evidence_document_name: null,
+            evidence_document_date: null,
+            kind_of_obligation: null,
+            contract_id: mockUuid("c0b1"),
+            contract_number: "PL-2026-00412",
+          },
+        ],
+      })
+    )
+  ),
+
   /**
    * The financings list — the one financing route that is not case-scoped.
    *
